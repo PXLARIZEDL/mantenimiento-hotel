@@ -16,19 +16,19 @@
   "ocurridoEn": "2026-08-08T17:05:44.000Z",
 
   "ordenId": "b7e2f4a0-2222-4c3d-8e91-1f2a3b4c5d60",
-  "numeroHabitacion": 314,
-  "tecnicoId": "4d5e6f70-4444-4e6f-b123-3c4d5e6f7003",
-  "resueltaEn": "2026-08-08T17:05:40.000Z",
+  "habitacionId": "c8d3a5b1-6666-4a7b-9d42-5e6f708a9005",
+  "resueltoPor": "4d5e6f70-4444-4e6f-b123-3c4d5e6f7003",
   "notaCierre": "Se limpió el filtro y se destapó el drenaje. Enfría normal.",
-  "habitacionLiberada": true,
 
   "_valores_permitidos": {
-    "habitacionLiberada": "true | false — false cuando la habitación quedó fuera de servicio por otra orden abierta"
+    "resueltoPor": "GUID del técnico que cerró la orden; el mismo tecnicoId que viajó en orden.asignada"
   },
 
   "_notas_por_campo": {
-    "tecnicoId": "puede venir nulo si la orden se cerró sin haber sido asignada nunca",
-    "habitacionLiberada": "notificaciones cambia el texto del aviso según este campo; recepción no debe recibir 'habitación disponible' si sigue bloqueada",
-    "notaCierre": "texto libre del técnico; no se interpreta, solo se muestra"
+    "eventoId": "identificador único del mensaje; es la clave de idempotencia — un consumidor que lo vea dos veces debe procesarlo una sola vez",
+    "habitacionId": "el mismo identificador que viajó en orden.creada; permite a notificaciones nombrar la habitación sin consultar a habitaciones",
+    "resueltoPor": "puede venir nulo si la orden se cerró sin haber sido asignada nunca",
+    "notaCierre": "texto libre del técnico; no se interpreta, solo se muestra",
+    "ocurridoEn": "UTC, ISO-8601 con Z; es el momento del cierre de la orden"
   }
 }
