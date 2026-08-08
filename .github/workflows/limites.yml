@@ -1,0 +1,125 @@
+# PROPÓSITO: hacer cumplir en CI el límite de contextos que documenta
+#   docs/adr/002-limites-contextos.md. Si los servicios son realmente
+#   independientes, un pull request no debería necesitar tocar dos a la vez.
+#   Cuando lo hace, casi siempre significa que hay acoplamiento no declarado.
+#
+# QUÉ VERIFICA:
+#   1. FALLA si el PR modifica archivos de dos o más carpetas bajo servicios/.
+#   2. AVISA (sin fallar) si toca archivos compartidos: docker-compose.yml,
+#      contratos/ o .env.example. Son cambios legítimos, pero afectan a todo el
+#      equipo y CODEOWNERS exige aprobación de @PXLARIZEDL.
+#   3. Imprime siempre la lista de archivos modificados, para que quede en el log.
+
+name: Límites de servicio
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+# Solo necesita leer el código.
+permissions:
+  contents: read
+
+jobs:
+  verificar-limites:
+    name: Un PR, un servicio
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+        with:
+          # Historial completo: sin esto no se puede comparar contra la base.
+          fetch-depth: 0
+
+      - name: Calcular archivos modificados
+        id: cambios
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          # Comparación de tres puntos: solo lo que introduce el PR, ignorando
+          # lo que avanzó main por su cuenta.
+          git diff --name-only "$BASE_SHA...$HEAD_SHA" > archivos.txt
+
+          echo "=============================================="
+          echo " Archivos modificados por este pull request"
+          echo "=============================================="
+          if [ -s archivos.txt ]; then
+            cat archivos.txt
+          else
+            echo "(ninguno)"
+          fi
+          echo "=============================================="
+          echo "Total: $(wc -l < archivos.txt)"
+
+          # También al resumen del PR, para no tener que abrir el log.
+          {
+            echo "### Archivos modificados"
+            echo ""
+            echo '```'
+            if [ -s archivos.txt ]; then cat archivos.txt; else echo "(ninguno)"; fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Regla 1 — un solo servicio por pull request
+        run: |
+          set -euo pipefail
+
+          # Segundo segmento de la ruta: servicios/<nombre>/...
+          SERVICIOS=$(grep '^servicios/' archivos.txt | cut -d/ -f2 | sort -u || true)
+          TOTAL=$(printf '%s' "$SERVICIOS" | grep -c . || true)
+
+          echo "Servicios tocados: ${TOTAL:-0}"
+          if [ "${TOTAL:-0}" -gt 0 ]; then
+            echo "$SERVICIOS" | sed 's/^/  - /'
+          fi
+
+          {
+            echo ""
+            echo "### Servicios tocados: ${TOTAL:-0}"
+            if [ "${TOTAL:-0}" -gt 0 ]; then
+              echo "$SERVICIOS" | sed 's/^/- `/; s/$/`/'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${TOTAL:-0}" -ge 2 ]; then
+            LISTA=$(echo "$SERVICIOS" | tr '\n' ' ')
+            echo "::error::Este PR modifica $TOTAL servicios ($LISTA). Cada servicio tiene su dueño y su ciclo de vida: divide el cambio en un pull request por servicio."
+            {
+              echo ""
+              echo "> **Bloqueado.** Un pull request debe tocar un solo servicio."
+              echo "> Divide este cambio en $TOTAL pull requests separados."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          echo "OK: el PR no cruza el límite de ningún otro servicio."
+
+      - name: Regla 2 — aviso por archivos compartidos
+        # Corre aunque la regla 1 haya fallado, para dar el panorama completo.
+        if: always()
+        run: |
+          set -euo pipefail
+
+          COMPARTIDOS=$(grep -E '^(docker-compose\.yml|contratos/|\.env\.example)' archivos.txt || true)
+
+          if [ -n "$COMPARTIDOS" ]; then
+            echo "$COMPARTIDOS" | while read -r f; do
+              echo "::warning file=$f::Archivo compartido por los 5 servicios. Un cambio aquí puede romper a todo el equipo; requiere aprobación de @PXLARIZEDL (CODEOWNERS)."
+            done
+            {
+              echo ""
+              echo "### ⚠️ Archivos compartidos modificados"
+              echo ""
+              echo "$COMPARTIDOS" | sed 's/^/- `/; s/$/`/'
+              echo ""
+              echo "No bloquea el PR, pero **requiere aprobación de @PXLARIZEDL**."
+              echo "Si cambia un contrato de \`contratos/\`, avisa al equipo antes de fusionar:"
+              echo "los consumidores en C# y en Python dejan de entender el evento."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "OK: el PR no toca archivos compartidos."
+          fi

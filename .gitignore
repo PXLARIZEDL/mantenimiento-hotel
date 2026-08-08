@@ -2,7 +2,7 @@
 #   descargadas y secretos locales. Existe uno solo en la raíz porque el
 #   proyecto es un monorepo con servicios de tres tecnologías distintas.
 #
-# DEBE CONTENER (patrones a escribir cuando se implemente):
+# DEBE CONTENER (implementado abajo):
 #   1. Secretos locales: .env y cualquier variante con credenciales reales.
 #   2. Artefactos de .NET: bin/, obj/, *.user, carpetas de publicación.
 #   3. Artefactos de Python: __pycache__/, *.pyc, .venv/, entornos virtuales.
@@ -20,3 +20,64 @@
 # RELACIONADO:
 #   - .env.example (la contraparte versionada de .env)
 #   - servicios/*/.dockerignore (mismo objetivo, pero para el contexto de build)
+
+# ---------------------------------------------------------------------------
+# 1. Entorno y secretos locales
+# ---------------------------------------------------------------------------
+.env
+.env.local
+.env.*.local
+*.local
+appsettings.Development.json
+appsettings.*.Development.json
+
+# La plantilla documentada SÍ se versiona. Esta negación es defensiva: hoy el
+# patrón .env no la alcanza, pero protege si alguien lo cambia por .env* .
+!.env.example
+
+# ---------------------------------------------------------------------------
+# 2. Artefactos de .NET (habitaciones, ordenes, gateway)
+# ---------------------------------------------------------------------------
+bin/
+obj/
+*.user
+*.suo
+publish/
+TestResults/
+
+# ---------------------------------------------------------------------------
+# 3. Artefactos de Python (tecnicos, notificaciones)
+# ---------------------------------------------------------------------------
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+env/
+*.egg-info/
+.pytest_cache/
+
+# ---------------------------------------------------------------------------
+# 4. Artefactos de Node / React (ui)
+# ---------------------------------------------------------------------------
+node_modules/
+dist/
+.vite/
+npm-debug.log*
+yarn-error.log*
+
+# ---------------------------------------------------------------------------
+# 5. Editor y sistema operativo
+# ---------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+.vs/
+.idea/
+.vscode/
+
+# ---------------------------------------------------------------------------
+# 6. Logs y volúmenes locales de Docker
+# ---------------------------------------------------------------------------
+*.log
+logs/
+docker-data/
