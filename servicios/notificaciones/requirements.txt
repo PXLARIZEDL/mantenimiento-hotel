@@ -1,0 +1,24 @@
+# PROPÓSITO: declarar las dependencias de Python del servicio notificaciones.
+#   Es la lista más corta del proyecto a propósito: este servicio no tiene base
+#   de datos y no llama a nadie.
+#
+# DEBE CONTENER (paquetes a fijar cuando se implemente):
+#   1. fastapi — el framework web que expone la bandeja.
+#   2. uvicorn con extras estándar — el servidor ASGI.
+#   3. pydantic — esquemas de los eventos entrantes y de las respuestas.
+#   4. pydantic-settings — configuración por variables de entorno.
+#   5. aio-pika (o pika) — cliente de RabbitMQ para consumidor.py.
+#
+# NO DEBE CONTENER:
+#   1. sqlalchemy ni psycopg: este servicio NO tiene base de datos, y agregar el
+#      driver es la primera señal de que alguien está por romper esa decisión
+#      (ver docs/adr/002-limites-contextos.md).
+#   2. httpx ni requests: no llama a ningún otro servicio; todo lo que necesita
+#      viene dentro del evento.
+#   3. Bibliotecas de correo o SMS; en la versión 1 el aviso se guarda en
+#      memoria, no se envía.
+#   4. Herramientas de desarrollo; irían en un requirements-dev.txt aparte.
+#
+# RELACIONADO:
+#   - Dockerfile (hace pip install de este archivo)
+#   - servicios/tecnicos/requirements.txt (compararlo: aquel SÍ lleva base de datos)

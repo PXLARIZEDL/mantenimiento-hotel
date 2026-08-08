@@ -1,0 +1,34 @@
+{
+  "_contrato": {
+    "evento": "orden.resuelta",
+    "version": "v1",
+    "exchange": "hotel.eventos",
+    "routing_key": "orden.resuelta",
+    "productor": "ordenes",
+    "consumidores": ["notificaciones"],
+    "se_publica_cuando": "la orden pasó a RESUELTA y la habitación volvió a estar DISPONIBLE",
+    "nota_para_implementadores": "El orden entre liberar la habitación y publicar el evento debe quedar decidido en docs/adr/003-estrategia-comunicacion.md; el consumidor asume que al recibirlo la habitación YA está libre."
+  },
+
+  "eventoId": "1a2b3c4d-5555-4f70-8234-4d5e6f708004",
+  "tipoEvento": "orden.resuelta",
+  "version": 1,
+  "ocurridoEn": "2026-08-08T17:05:44.000Z",
+
+  "ordenId": "b7e2f4a0-2222-4c3d-8e91-1f2a3b4c5d60",
+  "numeroHabitacion": 314,
+  "tecnicoId": "4d5e6f70-4444-4e6f-b123-3c4d5e6f7003",
+  "resueltaEn": "2026-08-08T17:05:40.000Z",
+  "notaCierre": "Se limpió el filtro y se destapó el drenaje. Enfría normal.",
+  "habitacionLiberada": true,
+
+  "_valores_permitidos": {
+    "habitacionLiberada": "true | false — false cuando la habitación quedó fuera de servicio por otra orden abierta"
+  },
+
+  "_notas_por_campo": {
+    "tecnicoId": "puede venir nulo si la orden se cerró sin haber sido asignada nunca",
+    "habitacionLiberada": "notificaciones cambia el texto del aviso según este campo; recepción no debe recibir 'habitación disponible' si sigue bloqueada",
+    "notaCierre": "texto libre del técnico; no se interpreta, solo se muestra"
+  }
+}

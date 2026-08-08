@@ -1,0 +1,39 @@
+{
+  "_contrato": {
+    "evento": "orden.creada",
+    "version": "v1",
+    "exchange": "hotel.eventos",
+    "routing_key": "orden.creada",
+    "productor": "ordenes",
+    "consumidores": ["tecnicos", "notificaciones"],
+    "se_publica_cuando": "la orden quedó guardada en estado ABIERTA y la habitación ya fue marcada FUERA_DE_SERVICIO",
+    "nota_para_implementadores": "C# serializa en camelCase y Python lee snake_case por defecto. Se acuerda camelCase en el cable; el consumidor Python debe declarar los alias. No cambiar esta convención sin subir a v2."
+  },
+
+  "eventoId": "f3a1c0de-1111-4b2a-9c31-0a7d4e5f6001",
+  "tipoEvento": "orden.creada",
+  "version": 1,
+  "ocurridoEn": "2026-08-08T14:32:10.000Z",
+
+  "ordenId": "b7e2f4a0-2222-4c3d-8e91-1f2a3b4c5d60",
+  "numeroHabitacion": 314,
+  "tipoFalla": "AIRE",
+  "descripcion": "El aire acondicionado no enfría y gotea sobre la alfombra.",
+  "prioridad": "ALTA",
+  "reportadoPor": "recepcion.turno.noche",
+  "estado": "ABIERTA",
+
+  "_valores_permitidos": {
+    "tipoFalla": ["AIRE", "PLOMERIA", "CERRADURA"],
+    "prioridad": ["BAJA", "MEDIA", "ALTA"],
+    "estado": ["ABIERTA"],
+    "numeroHabitacion": "entero entre 1 y 400"
+  },
+
+  "_notas_por_campo": {
+    "eventoId": "identificador único del mensaje; es la clave de idempotencia — un consumidor que lo vea dos veces debe procesarlo una sola vez",
+    "ordenId": "identificador de la orden en el servicio ordenes; NO es la clave de idempotencia del mensaje",
+    "tipoFalla": "tecnicos lo usa para elegir la especialidad; debe coincidir exactamente con las especialidades registradas",
+    "ocurridoEn": "UTC, ISO-8601 con Z; nunca hora local del hotel"
+  }
+}

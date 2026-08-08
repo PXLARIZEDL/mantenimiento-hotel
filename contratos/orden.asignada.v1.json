@@ -1,0 +1,38 @@
+{
+  "_contrato": {
+    "evento": "orden.asignada",
+    "version": "v1",
+    "exchange": "hotel.eventos",
+    "routing_key": "orden.asignada",
+    "productor": "tecnicos",
+    "consumidores": ["notificaciones", "ordenes"],
+    "se_publica_cuando": "el asignador eligió un técnico concreto para una orden ABIERTA",
+    "nota_para_implementadores": "Este es el único evento producido por Python y consumido por C#. El payload va en camelCase igual que los demás; FastAPI/pydantic debe serializar con alias, no con los nombres snake_case internos."
+  },
+
+  "eventoId": "9c4b7e10-3333-4d5e-a012-2b3c4d5e6f02",
+  "tipoEvento": "orden.asignada",
+  "version": 1,
+  "ocurridoEn": "2026-08-08T14:32:12.000Z",
+
+  "ordenId": "b7e2f4a0-2222-4c3d-8e91-1f2a3b4c5d60",
+  "numeroHabitacion": 314,
+  "tecnicoId": "4d5e6f70-4444-4e6f-b123-3c4d5e6f7003",
+  "nombreTecnico": "Luis Ramírez",
+  "especialidad": "AIRE",
+  "turno": "NOCHE",
+  "asignadoEn": "2026-08-08T14:32:12.000Z",
+
+  "_valores_permitidos": {
+    "especialidad": ["AIRE", "PLOMERIA", "CERRADURA"],
+    "turno": ["MAÑANA", "TARDE", "NOCHE"]
+  },
+
+  "_notas_por_campo": {
+    "ordenId": "viene tal cual del evento orden.creada; es lo que permite a ordenes mover la orden a ASIGNADA",
+    "nombreTecnico": "se copia dentro del evento a propósito, para que notificaciones no tenga que preguntarle nada a tecnicos",
+    "especialidad": "debe coincidir con el tipoFalla de la orden; si no coincide, el consumidor debe rechazar el mensaje"
+  },
+
+  "_caso_sin_tecnico": "Si no hay ningún técnico de esa especialidad en turno, NO se publica este evento. Decidir en docs/adr/003 qué se hace: ¿un evento orden.sin-tecnico en v2, o se reintenta al iniciar el próximo turno?"
+}

@@ -1,0 +1,32 @@
+<!--
+  PROPÓSITO: definir el proyecto .NET 8 del servicio ordenes y sus dependencias.
+    Es el servicio con más dependencias del sistema porque es el que orquesta:
+    habla con PostgreSQL, con habitaciones por HTTP y con RabbitMQ.
+
+  DEBE CONTENER:
+    1. PropertyGroup con TargetFramework net8.0, Nullable e ImplicitUsings
+       habilitados; Sdk="Microsoft.NET.Sdk.Web".
+    2. PackageReference a Npgsql.EntityFrameworkCore.PostgreSQL.
+    3. PackageReference a Microsoft.EntityFrameworkCore.Design (migraciones).
+    4. PackageReference a RabbitMQ.Client — publica orden.creada y
+       orden.resuelta, y consume orden.asignada.
+    5. PackageReference a Polly (o Microsoft.Extensions.Http.Resilience) — es EL
+       paquete que sostiene el requisito de timeout, reintento y circuit breaker
+       de la llamada a habitaciones.
+    6. PackageReference a Microsoft.Extensions.Http para el HttpClient tipado.
+    7. PackageReference a los health checks de PostgreSQL y RabbitMQ.
+
+  NO DEBE CONTENER:
+    1. Yarp.ReverseProxy: enrutar es tarea exclusiva del gateway.
+    2. Referencias de proyecto a Habitaciones.csproj u otro servicio; compartir
+       ensamblados acoplaría los despliegues y rompería el ADR 002.
+    3. Bibliotecas de envío de correo o notificación; eso es del servicio
+       notificaciones.
+    4. Un ORM o cliente para leer la base de habitaciones.
+
+  RELACIONADO:
+    - Program.cs (registra Polly sobre HabitacionesClient)
+    - Clientes/HabitacionesClient.cs
+    - Eventos/PublicadorEventos.cs, Eventos/ConsumidorOrdenAsignada.cs
+    - Dockerfile
+-->

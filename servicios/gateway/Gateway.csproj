@@ -1,0 +1,27 @@
+<!--
+  PROPÓSITO: definir el proyecto .NET 8 del gateway. Es el proyecto con menos
+    dependencias del sistema, y eso es una señal de que está bien acotado: un
+    gateway que necesita muchos paquetes probablemente está haciendo trabajo que
+    no le toca.
+
+  DEBE CONTENER:
+    1. PropertyGroup con TargetFramework net8.0, Nullable e ImplicitUsings
+       habilitados; Sdk="Microsoft.NET.Sdk.Web".
+    2. PackageReference a Yarp.ReverseProxy — el proxy inverso, razón de ser de
+       este proyecto.
+    3. PackageReference a Microsoft.Extensions.Diagnostics.HealthChecks para el
+       endpoint agregado /salud.
+
+  NO DEBE CONTENER:
+    1. Npgsql ni Entity Framework: el gateway no tiene base de datos.
+    2. RabbitMQ.Client: el gateway no publica ni consume eventos.
+    3. Polly: la resiliencia de la llamada sincrónica es del servicio ordenes;
+       el gateway solo enruta. YARP ya trae health checks pasivos.
+    4. Referencias de proyecto a los otros servicios.
+    5. Bibliotecas de autenticación mientras el proyecto no lo pida.
+
+  RELACIONADO:
+    - Program.cs
+    - appsettings.json → sección ReverseProxy
+    - Dockerfile
+-->

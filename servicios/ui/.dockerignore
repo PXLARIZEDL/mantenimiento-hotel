@@ -1,0 +1,26 @@
+# PROPÓSITO: reducir el contexto que Docker envía al construir la imagen de la
+#   UI. Aquí importa más que en los otros servicios: node_modules de la máquina
+#   local pesa cientos de megabytes y, si viaja, puede traer binarios compilados
+#   para Windows que rompen el build dentro de la imagen de Linux.
+#
+# DEBE CONTENER (patrones a escribir cuando se implemente):
+#   1. node_modules/ — el motivo principal de este archivo; se instala dentro con
+#      npm ci, nunca se copia.
+#   2. dist/ — el resultado de un build local; la imagen construye el suyo.
+#   3. .vite/ y cualquier caché de la herramienta.
+#   4. Archivos de entorno locales: .env, .env.local y variantes.
+#   5. Logs de npm y archivos de editor (.vscode/, .idea/).
+#   6. Dockerfile y .dockerignore mismos.
+#   7. README.md.
+#
+# NO DEBE CONTENER:
+#   - package.json ni package-lock.json; el lock es lo que hace reproducible el
+#     "npm ci" del Dockerfile, y excluirlo lo rompe.
+#   - index.html, vite.config.js ni la carpeta src/; son el código a construir.
+#   - nginx.conf, que la etapa final copia para servir la aplicación.
+#   - Patrones de .NET o Python; este contexto solo tiene el proyecto de React.
+#
+# RELACIONADO:
+#   - Dockerfile (etapa de build con npm ci, etapa final con nginx)
+#   - package.json (lo que NO se debe excluir)
+#   - .gitignore de la raíz (mismo objetivo, distinto destinatario)

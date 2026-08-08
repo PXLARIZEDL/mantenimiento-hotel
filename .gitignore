@@ -1,0 +1,22 @@
+# PROPÓSITO: evitar que entren al repositorio archivos generados, dependencias
+#   descargadas y secretos locales. Existe uno solo en la raíz porque el
+#   proyecto es un monorepo con servicios de tres tecnologías distintas.
+#
+# DEBE CONTENER (patrones a escribir cuando se implemente):
+#   1. Secretos locales: .env y cualquier variante con credenciales reales.
+#   2. Artefactos de .NET: bin/, obj/, *.user, carpetas de publicación.
+#   3. Artefactos de Python: __pycache__/, *.pyc, .venv/, entornos virtuales.
+#   4. Artefactos de Node/React: node_modules/, dist/, caché de Vite.
+#   5. Archivos de editor y sistema operativo: .vs/, .idea/, .vscode/,
+#      Thumbs.db, .DS_Store.
+#   6. Logs y volúmenes locales que Docker pueda dejar en el árbol.
+#
+# NO DEBE CONTENER:
+#   - .env.example, que SÍ se versiona por ser la plantilla documentada.
+#   - Los archivos de contratos/, que son parte del acuerdo entre servicios.
+#   - Reglas por servicio; si un servicio necesita algo muy propio, se evalúa un
+#     .gitignore local en su carpeta antes de ensuciar este.
+#
+# RELACIONADO:
+#   - .env.example (la contraparte versionada de .env)
+#   - servicios/*/.dockerignore (mismo objetivo, pero para el contexto de build)

@@ -1,0 +1,43 @@
+# PROPÓSITO: orquestar en local todos los servicios del sistema y su infraestructura
+#   (PostgreSQL y RabbitMQ) para que el proyecto se levante con un solo comando.
+#   Es el único lugar donde se define cómo se conectan las piezas entre sí.
+#
+# DEBE CONTENER:
+#   1. Servicio "rabbitmq": imagen rabbitmq:3-management, puertos 5672 (AMQP) y
+#      15672 (consola web), healthcheck con rabbitmq-diagnostics ping.
+#   2. Servicio "db-habitaciones": imagen postgres:16, volumen propio, healthcheck
+#      con pg_isready. Base de datos independiente, NO compartida.
+#   3. Servicio "db-ordenes": igual que el anterior, volumen y base propios.
+#   4. Servicio "db-tecnicos": igual que el anterior, volumen y base propios.
+#   5. Servicio "habitaciones": build desde ./servicios/habitaciones,
+#      depends_on db-habitaciones con condition service_healthy.
+#   6. Servicio "ordenes": build desde ./servicios/ordenes, depends_on
+#      db-ordenes y rabbitmq. Recibe la URL base de habitaciones por variable.
+#   7. Servicio "tecnicos": build desde ./servicios/tecnicos, depends_on
+#      db-tecnicos y rabbitmq.
+#   8. Servicio "notificaciones": build desde ./servicios/notificaciones,
+#      depends_on rabbitmq. Sin base de datos.
+#   9. Servicio "gateway": build desde ./servicios/gateway, es el ÚNICO que
+#      publica un puerto hacia el host.
+#  10. Servicio "ui": build desde ./servicios/ui, servido por nginx.
+#  11. Una red "hotel" de tipo bridge que une todo.
+#  12. Un bloque "volumes" con un volumen nombrado por cada base de datos.
+#  13. Todas las variables tomadas de .env mediante ${VARIABLE}, nunca escritas
+#      literalmente aquí.
+#
+# NO DEBE CONTENER:
+#   - Contraseñas ni cadenas de conexión literales; eso va en .env (plantilla en
+#     .env.example).
+#   - Una sola base de datos compartida por varios servicios; cada servicio es
+#     dueño de sus datos (ver docs/adr/002-limites-contextos.md).
+#   - Puertos publicados al host para habitaciones, ordenes, tecnicos ni
+#     notificaciones; solo el gateway y la ui son alcanzables desde afuera.
+#   - Configuración de despliegue en la nube, réplicas ni orquestadores; esto es
+#     solo para levantar el proyecto en una máquina.
+#
+# RELACIONADO:
+#   - .env.example (nombres de todas las variables usadas aquí)
+#   - servicios/*/Dockerfile (cada build apunta a uno)
+#   - servicios/gateway/appsettings.json (los nombres de servicio de esta red son
+#     los hosts que YARP usa como destino)
+#   - exchange "hotel.eventos" declarado por los servicios al arrancar

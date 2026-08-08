@@ -1,0 +1,27 @@
+<!--
+  PROPÓSITO: página raíz que sirve Vite. Es el único archivo HTML del proyecto:
+    React monta toda la interfaz dentro de un solo nodo de este documento.
+
+  DEBE CONTENER:
+    1. Estructura html/head/body con lang="es" y charset UTF-8 (hay tildes y ñ
+       en todo el dominio: MAÑANA, habitación, técnico).
+    2. La etiqueta meta viewport para que se vea bien en una tableta de
+       recepción.
+    3. El título de la pestaña: "Mantenimiento — Hotel".
+    4. Un único div contenedor con id="root", donde React monta la aplicación.
+    5. La etiqueta script type="module" apuntando a /src/main.jsx — es la que
+       Vite reemplaza al construir.
+
+  NO DEBE CONTENER:
+    1. Marcado de la interfaz (tablas, formularios, botones); todo eso vive en
+       los componentes de src/componentes/.
+    2. Etiquetas script con lógica ni llamadas fetch; la comunicación con el
+       backend vive en src/api.js.
+    3. URLs de servicios ni claves de configuración.
+    4. Hojas de estilo de CDN externos; el proyecto se levanta sin internet.
+
+  RELACIONADO:
+    - src/main.jsx (el módulo que se carga aquí)
+    - vite.config.js (define cómo se sirve y se construye este archivo)
+    - nginx.conf (sirve el resultado construido de este archivo)
+-->

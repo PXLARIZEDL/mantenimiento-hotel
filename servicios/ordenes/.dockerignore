@@ -1,0 +1,18 @@
+# PROPÓSITO: reducir el contexto que Docker envía al construir la imagen de
+#   ordenes y evitar que binarios compilados en la máquina local pisen los del
+#   contenedor.
+#
+# DEBE CONTENER (patrones a escribir cuando se implemente):
+#   1. bin/ y obj/.
+#   2. **/*.user y .vs/.
+#   3. appsettings.Development.json si tuviera datos locales.
+#   4. Dockerfile y .dockerignore.
+#   5. README.md.
+#
+# NO DEBE CONTENER:
+#   - El .csproj ni los archivos .cs.
+#   - Patrones de Python o Node; este contexto es solo el proyecto .NET.
+#
+# RELACIONADO:
+#   - Dockerfile
+#   - .gitignore de la raíz

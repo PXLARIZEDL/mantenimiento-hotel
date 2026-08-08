@@ -1,0 +1,29 @@
+<!--
+  PROPÓSITO: definir el proyecto .NET 8 del servicio habitaciones: qué framework
+    usa y de qué paquetes NuGet depende. Es la lista de dependencias del
+    servicio, equivalente al requirements.txt de los servicios Python.
+
+  DEBE CONTENER:
+    1. PropertyGroup con TargetFramework net8.0, Nullable habilitado e
+       ImplicitUsings habilitado.
+    2. Sdk="Microsoft.NET.Sdk.Web" en el elemento Project.
+    3. PackageReference a Npgsql.EntityFrameworkCore.PostgreSQL (acceso a
+       PostgreSQL desde EF Core).
+    4. PackageReference a Microsoft.EntityFrameworkCore.Design (migraciones).
+    5. PackageReference a AspNetCore.HealthChecks.NpgSql o el health check
+       equivalente para reportar el estado de la base.
+    6. PackageReference a Swashbuckle.AspNetCore si se quiere documentar la API.
+
+  NO DEBE CONTENER:
+    1. Polly ni Microsoft.Extensions.Http.Resilience: la resiliencia es del
+       LLAMADOR, y el llamador es ordenes (ver ordenes/Ordenes.csproj).
+    2. RabbitMQ.Client: este servicio no publica ni consume eventos.
+    3. Yarp.ReverseProxy: eso es exclusivo del gateway.
+    4. Referencias a proyectos de otros servicios; los servicios se comunican
+       por HTTP y por eventos, nunca compartiendo ensamblados.
+
+  RELACIONADO:
+    - Program.cs (usa lo que se declare aquí)
+    - Dockerfile (hace restore y build de este csproj)
+    - servicios/ordenes/Ordenes.csproj (compararlo: ese sí lleva Polly y RabbitMQ)
+-->

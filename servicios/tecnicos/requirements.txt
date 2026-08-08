@@ -1,0 +1,28 @@
+# PROPÓSITO: declarar las dependencias de Python del servicio tecnicos. Es el
+#   equivalente al .csproj de los servicios .NET. Todas las versiones deben ir
+#   fijadas para que la imagen sea reproducible.
+#
+# DEBE CONTENER (paquetes a fijar cuando se implemente):
+#   1. fastapi — el framework web.
+#   2. uvicorn con extras estándar — el servidor ASGI que lo ejecuta.
+#   3. pydantic — validación de los esquemas de modelos.py y de los contratos.
+#   4. pydantic-settings — lectura tipada de la configuración por variables de
+#      entorno.
+#   5. sqlalchemy — acceso a PostgreSQL desde base_datos.py.
+#   6. psycopg (o psycopg2-binary) — el driver de PostgreSQL.
+#   7. aio-pika (o pika) — cliente de RabbitMQ para consumidor.py; si se elige el
+#      cliente asíncrono, debe convivir con el bucle de eventos de FastAPI.
+#
+# NO DEBE CONTENER:
+#   1. Bibliotecas de cliente HTTP (httpx, requests): este servicio NO llama a
+#      ningún otro por HTTP, solo consume y publica eventos.
+#   2. Paquetes de envío de correo o de notificaciones; eso es del servicio
+#      notificaciones.
+#   3. Herramientas de desarrollo (pytest, black, ruff) mezcladas aquí; si se
+#      necesitan, van en un requirements-dev.txt aparte.
+#   4. Dependencias que solo use el servicio notificaciones.
+#
+# RELACIONADO:
+#   - Dockerfile (hace pip install de este archivo)
+#   - servicios/notificaciones/requirements.txt (compararlo: ese NO lleva
+#     sqlalchemy ni driver de base de datos)

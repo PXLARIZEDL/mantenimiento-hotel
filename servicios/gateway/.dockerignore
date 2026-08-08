@@ -1,0 +1,23 @@
+# PROPÓSITO: reducir el contexto que Docker envía al construir la imagen del
+#   gateway y evitar que binarios compilados en la máquina local pisen los que
+#   genera la etapa de build dentro del contenedor.
+#
+# DEBE CONTENER (patrones a escribir cuando se implemente):
+#   1. bin/ y obj/ — compilados locales que NO deben viajar al contexto.
+#   2. **/*.user y .vs/ — archivos de Visual Studio.
+#   3. appsettings.Development.json, si llegara a tener destinos locales
+#      apuntando a localhost en vez de a los nombres de servicio de Docker.
+#   4. Dockerfile y .dockerignore mismos.
+#   5. README.md y documentación.
+#
+# NO DEBE CONTENER:
+#   - Gateway.csproj ni Program.cs; son justamente lo que hay que copiar.
+#   - appsettings.json: ahí vive la sección ReverseProxy con la tabla de rutas,
+#     sin la cual el gateway no sabe reenviar nada. Excluirlo por error deja una
+#     imagen que arranca y no enruta.
+#   - Patrones de Python o Node; este contexto solo tiene el proyecto .NET.
+#
+# RELACIONADO:
+#   - Dockerfile (este archivo define su contexto de build)
+#   - appsettings.json (el archivo que NO se debe excluir)
+#   - .gitignore de la raíz (mismo objetivo, distinto destinatario)
