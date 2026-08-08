@@ -1,0 +1,15 @@
+# Dueño de cada servicio. GitHub pide su revisión automáticamente.
+/servicios/ordenes/         @PXLARIZEDL
+# PENDIENTE: reemplazar cuando me pasen sus usuarios de GitHub
+# /servicios/habitaciones/    @usuario-alberto
+# /servicios/tecnicos/        @usuario-josue
+# /servicios/notificaciones/  @usuario-raylin
+# /servicios/gateway/         @usuario-yadfreidel
+# /servicios/ui/              @usuario-luis
+# /docs/                      @usuario-yadfreidel
+
+# Archivos compartidos: solo yo los apruebo.
+/docker-compose.yml         @PXLARIZEDL
+/contratos/                 @PXLARIZEDL
+/.env.example               @PXLARIZEDL
+/.github/                   @PXLARIZEDL
