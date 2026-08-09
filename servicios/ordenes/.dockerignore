@@ -1,18 +1,29 @@
-# PROPÓSITO: reducir el contexto que Docker envía al construir la imagen de
-#   ordenes y evitar que binarios compilados en la máquina local pisen los del
-#   contenedor.
+# Reduce el contexto que Docker envía al construir la imagen de ordenes y evita
+# que binarios compilados en la máquina local pisen los del contenedor.
 #
-# DEBE CONTENER (patrones a escribir cuando se implemente):
-#   1. bin/ y obj/.
-#   2. **/*.user y .vs/.
-#   3. appsettings.Development.json si tuviera datos locales.
-#   4. Dockerfile y .dockerignore.
-#   5. README.md.
-#
-# NO DEBE CONTENER:
-#   - El .csproj ni los archivos .cs.
-#   - Patrones de Python o Node; este contexto es solo el proyecto .NET.
-#
-# RELACIONADO:
-#   - Dockerfile
-#   - .gitignore de la raíz
+# El .csproj y los .cs NO se excluyen: son justamente lo que hay que copiar.
+
+# Artefactos de compilación local
+bin/
+obj/
+publish/
+TestResults/
+
+# Editor
+*.user
+*.suo
+.vs/
+.idea/
+.vscode/
+
+# Configuración local que no debe viajar a la imagen
+appsettings.Development.json
+
+# Herramientas de desarrollo: el manifiesto de dotnet-ef sirve para generar
+# migraciones en la máquina, no para ejecutar el servicio.
+.config/
+
+# No aportan nada a la imagen
+Dockerfile
+.dockerignore
+README.md
