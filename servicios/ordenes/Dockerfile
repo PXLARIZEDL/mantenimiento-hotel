@@ -1,23 +1,39 @@
-# PROPÓSITO: construir la imagen del servicio ordenes. Define cómo se compila el
-#   proyecto .NET 8 y cómo se ejecuta dentro del contenedor.
+# Imagen del servicio ordenes (.NET 8).
 #
-# DEBE CONTENER:
-#   1. Etapa de build sobre la imagen del SDK de .NET 8.
-#   2. Copia del Ordenes.csproj y "dotnet restore" antes del resto del código,
-#      para aprovechar la caché de capas.
-#   3. Copia del resto de archivos y "dotnet publish" en Release.
-#   4. Etapa final sobre la imagen de runtime aspnet:8.0.
-#   5. EXPOSE del puerto interno de escucha.
-#   6. ENTRYPOINT ejecutando el dll del servicio.
+# Ni la URL de habitaciones ni las credenciales de RabbitMQ viven aquí: llegan
+# por variables de entorno desde docker-compose.yml.
 #
-# NO DEBE CONTENER:
-#   - La URL de habitaciones ni las credenciales de RabbitMQ; llegan por
-#     variables de entorno desde docker-compose.yml.
-#   - Un "wait-for" hacia RabbitMQ o hacia la base; la espera se resuelve con
-#     depends_on + healthcheck en compose, y con reconexión en el propio código.
-#   - Herramientas de desarrollo en la imagen final.
-#
-# RELACIONADO:
-#   - Ordenes.csproj
-#   - .dockerignore
-#   - docker-compose.yml → servicio "ordenes" (depends_on: db-ordenes, rabbitmq)
+# Tampoco hay "wait-for" hacia RabbitMQ o la base: la espera se resuelve con
+# depends_on + healthcheck en compose, y con reconexión en el propio código
+# (Eventos/PublicadorEventos.cs y Eventos/ConsumidorOrdenAsignada.cs).
+
+# --- Etapa de build ---------------------------------------------------------
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /origen
+
+# El .csproj primero y solo: mientras no cambien las dependencias, Docker
+# reutiliza la capa del restore y no vuelve a bajar los paquetes.
+COPY Ordenes.csproj ./
+RUN dotnet restore Ordenes.csproj
+
+# Ahora sí el resto del código.
+COPY . ./
+RUN dotnet publish Ordenes.csproj \
+    --configuration Release \
+    --no-restore \
+    --output /publicado
+
+# --- Etapa final ------------------------------------------------------------
+# Solo el runtime: la imagen final no lleva el SDK ni herramientas de desarrollo.
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+WORKDIR /app
+
+# Usuario sin privilegios; la imagen base ya lo trae creado.
+USER $APP_UID
+
+COPY --from=build /publicado ./
+
+ENV ASPNETCORE_HTTP_PORTS=8080
+EXPOSE 8080
+
+ENTRYPOINT ["dotnet", "Ordenes.dll"]

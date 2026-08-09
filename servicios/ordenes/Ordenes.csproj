@@ -1,32 +1,47 @@
-<!--
-  PROPÓSITO: definir el proyecto .NET 8 del servicio ordenes y sus dependencias.
-    Es el servicio con más dependencias del sistema porque es el que orquesta:
-    habla con PostgreSQL, con habitaciones por HTTP y con RabbitMQ.
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  DEBE CONTENER:
-    1. PropertyGroup con TargetFramework net8.0, Nullable e ImplicitUsings
-       habilitados; Sdk="Microsoft.NET.Sdk.Web".
-    2. PackageReference a Npgsql.EntityFrameworkCore.PostgreSQL.
-    3. PackageReference a Microsoft.EntityFrameworkCore.Design (migraciones).
-    4. PackageReference a RabbitMQ.Client — publica orden.creada y
-       orden.resuelta, y consume orden.asignada.
-    5. PackageReference a Polly (o Microsoft.Extensions.Http.Resilience) — es EL
-       paquete que sostiene el requisito de timeout, reintento y circuit breaker
-       de la llamada a habitaciones.
-    6. PackageReference a Microsoft.Extensions.Http para el HttpClient tipado.
-    7. PackageReference a los health checks de PostgreSQL y RabbitMQ.
+  <!--
+    Servicio ordenes — orquestador del caso de uso.
+    Es el servicio con más dependencias del sistema: PostgreSQL (datos propios),
+    HTTP resiliente hacia habitaciones y RabbitMQ (publica y consume).
 
-  NO DEBE CONTENER:
-    1. Yarp.ReverseProxy: enrutar es tarea exclusiva del gateway.
-    2. Referencias de proyecto a Habitaciones.csproj u otro servicio; compartir
-       ensamblados acoplaría los despliegues y rompería el ADR 002.
-    3. Bibliotecas de envío de correo o notificación; eso es del servicio
-       notificaciones.
-    4. Un ORM o cliente para leer la base de habitaciones.
+    NO se referencia ningún otro .csproj a propósito: compartir ensamblados
+    acoplaría los despliegues y rompería docs/adr/002-limites-contextos.md.
+  -->
 
-  RELACIONADO:
-    - Program.cs (registra Polly sobre HabitacionesClient)
-    - Clientes/HabitacionesClient.cs
-    - Eventos/PublicadorEventos.cs, Eventos/ConsumidorOrdenAsignada.cs
-    - Dockerfile
--->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Ordenes</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Base de datos propia del servicio. -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.10">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+
+    <!-- Publica orden.creada y orden.resuelta; consume orden.asignada. -->
+    <PackageReference Include="RabbitMQ.Client" Version="6.8.1" />
+
+    <!--
+      Sostiene el requisito de timeout + reintento + circuit breaker de la única
+      llamada sincrónica del sistema. Las políticas se arman en Program.cs a
+      partir de configuración, nunca aquí ni dentro del cliente.
+    -->
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="8.10.0" />
+
+    <!-- Health checks para GET /salud (PanelSalud de la UI). -->
+    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="8.0.2" />
+    <PackageReference Include="AspNetCore.HealthChecks.Rabbitmq" Version="8.0.1" />
+
+    <!-- Documentación de la API tras el gateway. -->
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
+  </ItemGroup>
+
+</Project>
