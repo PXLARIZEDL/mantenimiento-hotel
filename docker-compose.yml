@@ -1,43 +1,225 @@
-# PROPÓSITO: orquestar en local todos los servicios del sistema y su infraestructura
-#   (PostgreSQL y RabbitMQ) para que el proyecto se levante con un solo comando.
-#   Es el único lugar donde se define cómo se conectan las piezas entre sí.
+# Levanta el sistema completo en local: los servicios y su infraestructura.
+# Es el único lugar donde se define cómo se conectan las piezas entre sí.
 #
-# DEBE CONTENER:
-#   1. Servicio "rabbitmq": imagen rabbitmq:3-management, puertos 5672 (AMQP) y
-#      15672 (consola web), healthcheck con rabbitmq-diagnostics ping.
-#   2. Servicio "db-habitaciones": imagen postgres:16, volumen propio, healthcheck
-#      con pg_isready. Base de datos independiente, NO compartida.
-#   3. Servicio "db-ordenes": igual que el anterior, volumen y base propios.
-#   4. Servicio "db-tecnicos": igual que el anterior, volumen y base propios.
-#   5. Servicio "habitaciones": build desde ./servicios/habitaciones,
-#      depends_on db-habitaciones con condition service_healthy.
-#   6. Servicio "ordenes": build desde ./servicios/ordenes, depends_on
-#      db-ordenes y rabbitmq. Recibe la URL base de habitaciones por variable.
-#   7. Servicio "tecnicos": build desde ./servicios/tecnicos, depends_on
-#      db-tecnicos y rabbitmq.
-#   8. Servicio "notificaciones": build desde ./servicios/notificaciones,
-#      depends_on rabbitmq. Sin base de datos.
-#   9. Servicio "gateway": build desde ./servicios/gateway, es el ÚNICO que
-#      publica un puerto hacia el host.
-#  10. Servicio "ui": build desde ./servicios/ui, servido por nginx.
-#  11. Una red "hotel" de tipo bridge que une todo.
-#  12. Un bloque "volumes" con un volumen nombrado por cada base de datos.
-#  13. Todas las variables tomadas de .env mediante ${VARIABLE}, nunca escritas
-#      literalmente aquí.
+#     cp .env.example .env
+#     docker compose up --build
 #
-# NO DEBE CONTENER:
-#   - Contraseñas ni cadenas de conexión literales; eso va en .env (plantilla en
-#     .env.example).
-#   - Una sola base de datos compartida por varios servicios; cada servicio es
-#     dueño de sus datos (ver docs/adr/002-limites-contextos.md).
-#   - Puertos publicados al host para habitaciones, ordenes, tecnicos ni
-#     notificaciones; solo el gateway y la ui son alcanzables desde afuera.
-#   - Configuración de despliegue en la nube, réplicas ni orquestadores; esto es
-#     solo para levantar el proyecto en una máquina.
+# Ningún valor va escrito aquí: todo viene de .env mediante ${VARIABLE}.
 #
-# RELACIONADO:
-#   - .env.example (nombres de todas las variables usadas aquí)
-#   - servicios/*/Dockerfile (cada build apunta a uno)
-#   - servicios/gateway/appsettings.json (los nombres de servicio de esta red son
-#     los hosts que YARP usa como destino)
-#   - exchange "hotel.eventos" declarado por los servicios al arrancar
+# ---------------------------------------------------------------------------
+# SERVICIOS TODAVÍA NO IMPLEMENTADOS
+# ---------------------------------------------------------------------------
+# notificaciones y ui siguen siendo esqueleto: sus Dockerfile son un bloque de
+# comentario y NO construyen. Están declarados abajo con el perfil "pendiente",
+# así que `docker compose up` los ignora y el resto del sistema levanta igual.
+#
+# Cuando se implementen, se les quita la línea `profiles:` y entran solos.
+# Para intentar levantarlos igual: `docker compose --profile pendiente up`.
+
+name: mantenimiento-hotel
+
+services:
+
+  # =========================================================================
+  # Infraestructura
+  # =========================================================================
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: hotel-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USUARIO}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_CONTRASENA}
+    ports:
+      - "${RABBITMQ_PUERTO}:5672"        # AMQP
+      - "${RABBITMQ_PUERTO_CONSOLA}:15672"  # consola web
+    healthcheck:
+      # Los servicios reconectan solos, pero el healthcheck evita arrancarlos
+      # contra un broker a medio iniciar y llenar los logs de reintentos.
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks: [hotel]
+
+  # Una base por servicio, con su propio volumen. NUNCA compartida:
+  # docs/adr/002-limites-contextos.md.
+
+  db-habitaciones:
+    image: postgres:16
+    container_name: hotel-db-habitaciones
+    environment:
+      POSTGRES_USER: ${DB_HABITACIONES_USUARIO}
+      POSTGRES_PASSWORD: ${DB_HABITACIONES_CONTRASENA}
+      POSTGRES_DB: ${DB_HABITACIONES_NOMBRE}
+    volumes:
+      - datos-habitaciones:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_HABITACIONES_USUARIO} -d ${DB_HABITACIONES_NOMBRE}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [hotel]
+
+  db-ordenes:
+    image: postgres:16
+    container_name: hotel-db-ordenes
+    environment:
+      POSTGRES_USER: ${DB_ORDENES_USUARIO}
+      POSTGRES_PASSWORD: ${DB_ORDENES_CONTRASENA}
+      POSTGRES_DB: ${DB_ORDENES_NOMBRE}
+    volumes:
+      - datos-ordenes:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_ORDENES_USUARIO} -d ${DB_ORDENES_NOMBRE}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [hotel]
+
+  db-tecnicos:
+    image: postgres:16
+    container_name: hotel-db-tecnicos
+    environment:
+      POSTGRES_USER: ${DB_TECNICOS_USUARIO}
+      POSTGRES_PASSWORD: ${DB_TECNICOS_CONTRASENA}
+      POSTGRES_DB: ${DB_TECNICOS_NOMBRE}
+    volumes:
+      - datos-tecnicos:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_TECNICOS_USUARIO} -d ${DB_TECNICOS_NOMBRE}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [hotel]
+
+  # =========================================================================
+  # Servicios de dominio
+  # =========================================================================
+
+  habitaciones:
+    build: ./servicios/habitaciones
+    container_name: hotel-habitaciones
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      # El doble guion bajo es cómo .NET traduce una variable de entorno a una
+      # sección anidada de configuración: ConnectionStrings:Postgres.
+      ConnectionStrings__Postgres: ${CADENA_HABITACIONES}
+      Logging__LogLevel__Default: ${NIVEL_LOG}
+    depends_on:
+      db-habitaciones:
+        condition: service_healthy
+    # Sin ports: no es alcanzable desde el host, solo por la red interna.
+    networks: [hotel]
+
+  ordenes:
+    build: ./servicios/ordenes
+    container_name: hotel-ordenes
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      ConnectionStrings__Postgres: ${CADENA_ORDENES}
+
+      # La única llamada sincrónica del sistema.
+      Habitaciones__UrlBase: ${HABITACIONES_URL_BASE}
+      Habitaciones__Resiliencia__TimeoutSegundos: ${RESILIENCIA_TIMEOUT_SEGUNDOS}
+      Habitaciones__Resiliencia__Reintentos: ${RESILIENCIA_REINTENTOS}
+      Habitaciones__Resiliencia__EsperaBaseMilisegundos: ${RESILIENCIA_ESPERA_BASE_MS}
+      Habitaciones__Resiliencia__UmbralFallosCircuito: ${RESILIENCIA_UMBRAL_CIRCUITO}
+      Habitaciones__Resiliencia__MinimoLlamadasCircuito: ${RESILIENCIA_MINIMO_LLAMADAS}
+      Habitaciones__Resiliencia__SegundosVentanaMuestreo: ${RESILIENCIA_VENTANA_SEGUNDOS}
+      Habitaciones__Resiliencia__SegundosCircuitoAbierto: ${RESILIENCIA_CIRCUITO_ABIERTO_SEGUNDOS}
+
+      RabbitMq__Host: ${RABBITMQ_HOST}
+      RabbitMq__Puerto: "5672"
+      RabbitMq__Usuario: ${RABBITMQ_USUARIO}
+      RabbitMq__Contrasena: ${RABBITMQ_CONTRASENA}
+      RabbitMq__Exchange: ${EXCHANGE}
+
+      Logging__LogLevel__Default: ${NIVEL_LOG}
+    depends_on:
+      db-ordenes:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      # NO depende de habitaciones a propósito: debe arrancar aunque esté
+      # caída. Para eso existe el circuit breaker.
+    networks: [hotel]
+
+  tecnicos:
+    build: ./servicios/tecnicos
+    container_name: hotel-tecnicos
+    environment:
+      DATABASE_URL: ${URL_TECNICOS}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PUERTO: "5672"
+      RABBITMQ_USUARIO: ${RABBITMQ_USUARIO}
+      RABBITMQ_CONTRASENA: ${RABBITMQ_CONTRASENA}
+      EXCHANGE: ${EXCHANGE}
+      HOTEL_UTC_OFFSET: ${HOTEL_UTC_OFFSET}
+    depends_on:
+      db-tecnicos:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks: [hotel]
+
+  notificaciones:
+    # PENDIENTE: el Dockerfile todavía es un bloque de comentario y no
+    # construye. Con este perfil, `docker compose up` lo ignora.
+    # Al implementarlo, borrar la línea `profiles`.
+    profiles: ["pendiente"]
+    build: ./servicios/notificaciones
+    container_name: hotel-notificaciones
+    environment:
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PUERTO: "5672"
+      RABBITMQ_USUARIO: ${RABBITMQ_USUARIO}
+      RABBITMQ_CONTRASENA: ${RABBITMQ_CONTRASENA}
+      EXCHANGE: ${EXCHANGE}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    # Sin base de datos: guarda los avisos en memoria.
+    networks: [hotel]
+
+  # =========================================================================
+  # Frontera
+  # =========================================================================
+
+  gateway:
+    build: ./servicios/gateway
+    container_name: hotel-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      Logging__LogLevel__Default: ${NIVEL_LOG}
+    ports:
+      # El ÚNICO servicio que publica un puerto hacia el host.
+      - "${GATEWAY_PUERTO}:8080"
+    depends_on:
+      - habitaciones
+      - ordenes
+      - tecnicos
+    networks: [hotel]
+
+  ui:
+    # PENDIENTE: igual que notificaciones, todavía es esqueleto.
+    profiles: ["pendiente"]
+    build: ./servicios/ui
+    container_name: hotel-ui
+    ports:
+      - "${UI_PUERTO}:80"
+    depends_on:
+      - gateway
+    networks: [hotel]
+
+# ===========================================================================
+
+networks:
+  hotel:
+    driver: bridge
+
+volumes:
+  datos-habitaciones:
+  datos-ordenes:
+  datos-tecnicos:

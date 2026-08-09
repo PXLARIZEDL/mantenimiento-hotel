@@ -3,15 +3,17 @@
 Sistema de gestión de órdenes de mantenimiento para un hotel de 400 habitaciones,
 construido como un conjunto de microservicios.
 
-> **Estado:** esqueleto. Todos los archivos de código están vacíos y solo contienen
-> un bloque de comentario que describe qué debe implementarse en ellos.
+> **Estado:** cuatro de los seis servicios están implementados
+> (`habitaciones`, `ordenes`, `tecnicos`, `gateway`). `notificaciones` y `ui`
+> siguen siendo esqueleto: solo tienen un bloque de comentario que describe qué
+> debe implementarse en ellos.
 
 ---
 
 ## 1. El caso de uso que da sentido al sistema
 
-Un empleado reporta una falla (aire acondicionado, plomería, cerradura).
-A partir de ese reporte:
+Un empleado reporta una falla (aire acondicionado, plomería, cerradura o
+electricidad). A partir de ese reporte:
 
 1. Se crea una **orden de mantenimiento** en estado `ABIERTA`.
 2. La **habitación se bloquea** automáticamente (`FUERA_DE_SERVICIO`).
@@ -58,7 +60,7 @@ Exchange `hotel.eventos`, tipo **topic**.
 | Evento | Productor | Consumidores |
 |---|---|---|
 | `orden.creada` | `ordenes` | `tecnicos`, `notificaciones` |
-| `orden.asignada` | `tecnicos` | `notificaciones` |
+| `orden.asignada` | `tecnicos` | `notificaciones`, `ordenes` |
 | `orden.resuelta` | `ordenes` | `notificaciones` |
 
 El detalle de cada evento vive en `docs/catalogo-eventos.md` y su forma exacta en
@@ -79,13 +81,41 @@ mantenimiento-hotel/
 
 ## 5. Cómo se levanta
 
-> **Pendiente de escribir** cuando `docker-compose.yml` esté implementado.
+```bash
+cp .env.example .env      # ajustar si hace falta; los valores de ejemplo sirven
+docker compose up --build
+```
 
-Pasos previstos:
+Levanta ocho contenedores: RabbitMQ, tres PostgreSQL y los cuatro servicios
+implementados. `notificaciones` y `ui` **no arrancan** porque todavía son
+esqueleto y sus `Dockerfile` no construyen; están declarados con el perfil
+`pendiente` para que su ausencia no impida levantar el resto. Cuando se
+implementen, se les quita la línea `profiles:` y entran solos.
 
-1. Copiar `.env.example` a `.env` y ajustar valores.
-2. `docker compose up --build`.
-3. Entrar por el gateway (la UI y las APIs se acceden solo por ahí).
+Todo entra por el gateway, que es el único puerto publicado hacia el host:
+
+| Qué | Dónde |
+|---|---|
+| API por el gateway | `http://localhost:8080` |
+| Salud agregada del sistema | `http://localhost:8080/salud` |
+| Consola de RabbitMQ | `http://localhost:15672` (`guest` / `guest`) |
+
+Probar el caso de uso completo desde la línea de comandos:
+
+```bash
+# 1. Reportar una falla. Bloquea la habitación y publica orden.creada.
+curl -X POST http://localhost:8080/ordenes \
+  -H "Content-Type: application/json" \
+  -d '{"habitacionNumero":314,"tipoFalla":"AIRE_ACONDICIONADO",
+       "descripcion":"No enfría y gotea sobre la alfombra.",
+       "prioridad":"ALTA","reportadoPor":"recepcion.turno.noche"}'
+
+# 2. tecnicos asigna solo, al consumir el evento.
+curl http://localhost:8080/asignaciones
+
+# 3. La orden ya debería estar ASIGNADA.
+curl http://localhost:8080/ordenes
+```
 
 ---
 
