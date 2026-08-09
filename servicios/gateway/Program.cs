@@ -34,6 +34,8 @@
 //   - servicios/ui/src/api.js (todo lo que la UI pide entra por aquí)
 //   - servicios/ui/src/componentes/PanelSalud.jsx (consume /salud)
 
+using Yarp.ReverseProxy.Model;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(options =>
@@ -48,6 +50,14 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddHealthChecks();
 
+// Para consultar el /salud de cada servicio en el endpoint agregado.
+builder.Services.AddHttpClient("salud", cliente =>
+{
+    // Corto a propósito: /salud no debe quedarse colgado esperando a un
+    // servicio caído; que no responda en 3s ya es la respuesta.
+    cliente.Timeout = TimeSpan.FromSeconds(3);
+});
+
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
@@ -55,8 +65,82 @@ var app = builder.Build();
 
 app.UseCors();
 
+// Logging de cada petición reenviada: sin esto, depurar el sistema
+// distribuido es a ciegas. Se registra después de que YARP eligió destino.
+app.Use(async (contexto, siguiente) =>
+{
+    await siguiente();
+
+    var reenvio = contexto.Features.Get<IReverseProxyFeature>();
+    var destino = reenvio?.ProxiedDestination?.Model?.Config?.Address;
+
+    if (destino is not null)
+    {
+        app.Logger.LogInformation(
+            "{Metodo} {Ruta} -> {Destino} : {Codigo}",
+            contexto.Request.Method,
+            contexto.Request.Path,
+            destino,
+            contexto.Response.StatusCode);
+    }
+});
+
+// Liveness del gateway en sí: responde mientras el proceso esté vivo.
 app.MapHealthChecks("/health");
-app.MapHealthChecks("/salud");
+
+// Endpoint AGREGADO que consume PanelSalud: consulta el /salud de los cuatro
+// servicios y devuelve un resumen.
+//
+// Las direcciones y la ruta de sondeo salen de la sección ReverseProxy, nunca
+// escritas a mano: el gateway ya declara ahí el mapa del sistema.
+//
+// Devuelve 200 aunque algún servicio esté caído. Un servicio abajo se REPORTA,
+// pero no impide que el gateway responda (servicios/gateway/README.md).
+app.MapGet("/salud", async (
+    IHttpClientFactory fabrica,
+    IConfiguration configuracion,
+    CancellationToken ct) =>
+{
+    var clusteres = configuracion.GetSection("ReverseProxy:Clusters").GetChildren();
+    var cliente = fabrica.CreateClient("salud");
+
+    var consultas = clusteres.Select(async cluster =>
+    {
+        var direccion = cluster.GetSection("Destinations").GetChildren()
+            .FirstOrDefault()?["Address"];
+        var ruta = cluster["HealthCheck:Active:Path"] ?? "/salud";
+
+        if (string.IsNullOrWhiteSpace(direccion))
+        {
+            return new { nombre = cluster.Key, estado = "desconocido", detalle = "sin destino configurado" };
+        }
+
+        try
+        {
+            using var respuesta = await cliente.GetAsync(
+                $"{direccion.TrimEnd('/')}{ruta}", ct);
+
+            return new
+            {
+                nombre = cluster.Key,
+                estado = respuesta.IsSuccessStatusCode ? "sano" : "caido",
+                detalle = $"HTTP {(int)respuesta.StatusCode}"
+            };
+        }
+        catch (Exception ex)
+        {
+            return new { nombre = cluster.Key, estado = "caido", detalle = ex.GetType().Name };
+        }
+    });
+
+    var servicios = await Task.WhenAll(consultas);
+
+    return Results.Ok(new
+    {
+        estado = servicios.All(s => s.estado == "sano") ? "sano" : "degradado",
+        servicios
+    });
+});
 
 app.MapReverseProxy();
 
