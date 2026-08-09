@@ -14,10 +14,20 @@
 #   - Gateway.csproj ni Program.cs; son justamente lo que hay que copiar.
 #   - appsettings.json: ahí vive la sección ReverseProxy con la tabla de rutas,
 #     sin la cual el gateway no sabe reenviar nada. Excluirlo por error deja una
-#     imagen que arranca y no enruta.
+#     imagen que arrancar y no enruta.
 #   - Patrones de Python o Node; este contexto solo tiene el proyecto .NET.
 #
 # RELACIONADO:
 #   - Dockerfile (este archivo define su contexto de build)
 #   - appsettings.json (el archivo que NO se debe excluir)
 #   - .gitignore de la raíz (mismo objetivo, distinto destinatario)
+
+bin/
+obj/
+.vs/
+**/*.user
+appsettings.Development.json
+Dockerfile
+.dockerignore
+README.md
+

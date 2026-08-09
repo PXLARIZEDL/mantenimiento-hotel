@@ -33,3 +33,32 @@
 //   - Destinos: habitaciones, ordenes, tecnicos, notificaciones
 //   - servicios/ui/src/api.js (todo lo que la UI pide entra por aquí)
 //   - servicios/ui/src/componentes/PanelSalud.jsx (consume /salud)
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+builder.Services.AddHealthChecks();
+
+builder.Services.AddReverseProxy()
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
+var app = builder.Build();
+
+app.UseCors();
+
+app.MapHealthChecks("/health");
+app.MapHealthChecks("/salud");
+
+app.MapReverseProxy();
+
+app.Run();
+
