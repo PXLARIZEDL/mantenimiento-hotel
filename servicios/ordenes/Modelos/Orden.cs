@@ -85,7 +85,17 @@ public class Orden
     /// <summary>
     /// Crea la orden ya validada y en estado ABIERTA. Es el único camino de alta.
     /// </summary>
+    /// <param name="id">
+    /// Identificador de la orden. Lo genera quien orquesta el caso de uso ANTES
+    /// de bloquear la habitación, porque es lo que viaja a habitaciones para
+    /// que ese endpoint reconozca un reintento.
+    ///
+    /// Por eso la entidad NO lo genera: si acuñara uno propio, el cuarto
+    /// quedaría bloqueado con un identificador y la orden nacería con otro, y
+    /// al resolverla la habitación nunca se liberaría.
+    /// </param>
     public static Orden Crear(
+        Guid id,
         Guid habitacionId,
         int habitacionNumero,
         TipoFalla tipoFalla,
@@ -93,6 +103,13 @@ public class Orden
         Prioridad prioridad,
         string reportadoPor)
     {
+        if (id == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "La orden necesita el identificador con el que se bloqueó la habitación.",
+                nameof(id));
+        }
+
         if (habitacionId == Guid.Empty)
         {
             throw new ArgumentException("La habitación es obligatoria.", nameof(habitacionId));
@@ -116,7 +133,7 @@ public class Orden
 
         return new Orden
         {
-            Id = Guid.NewGuid(),
+            Id = id,
             HabitacionId = habitacionId,
             HabitacionNumero = habitacionNumero,
             TipoFalla = tipoFalla,

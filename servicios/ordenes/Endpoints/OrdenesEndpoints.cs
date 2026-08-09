@@ -195,7 +195,11 @@ public static class OrdenesEndpoints
 
         try
         {
+            // El MISMO ordenId con el que se bloqueó la habitación en el paso b.
+            // Si aquí naciera otro, el cuarto quedaría bloqueado con un
+            // identificador y la orden con otro, y al resolverla no se liberaría.
             orden = Orden.Crear(
+                ordenId,
                 habitacionId,
                 peticion.HabitacionNumero,
                 peticion.TipoFalla,
