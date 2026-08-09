@@ -64,6 +64,21 @@ MAX_AVISOS = 50
 _lock = threading.Lock()
 _avisos: "OrderedDict[str, dict]" = OrderedDict()
 
+# Índice ordenId -> número de habitación.
+#
+# Hace falta porque SOLO orden.creada lleva habitacionNumero: los contratos de
+# orden.asignada y orden.resuelta traen ordenId pero no el cuarto. Sin esto, dos
+# de los tres avisos no podrían decirle a recepción de qué habitación hablan.
+#
+# Es una correlación oportunista, no una garantía: si el servicio se reinicia o
+# el índice se recorta, el aviso sale como "Habitación (sin identificar)" en vez
+# de fallar. Que se degrade así en vez de romperse es deliberado.
+_habitacion_por_orden: "OrderedDict[str, int]" = OrderedDict()
+
+# Mayor que MAX_AVISOS a propósito: una orden puede seguir viva después de que
+# su aviso de creación se haya caído de la bandeja.
+MAX_ORDENES_RECORDADAS = 500
+
 
 def existe_evento_id(evento_id: str) -> bool:
     """Usado por consumidor.py para la verificación de idempotencia."""
@@ -87,6 +102,22 @@ def agregar_aviso(aviso: dict) -> None:
                 aviso_id_descartado,
                 MAX_AVISOS,
             )
+
+
+def recordar_habitacion(orden_id: str, numero_habitacion: int) -> None:
+    """Guarda a qué habitación pertenece una orden. Lo llama consumidor.py al
+    procesar orden.creada, que es el único evento que trae el número."""
+    with _lock:
+        _habitacion_por_orden[orden_id] = numero_habitacion
+        _habitacion_por_orden.move_to_end(orden_id)
+        while len(_habitacion_por_orden) > MAX_ORDENES_RECORDADAS:
+            _habitacion_por_orden.popitem(last=False)
+
+
+def habitacion_de_orden(orden_id: str) -> Optional[int]:
+    """Número de habitación de una orden, si se vio pasar su orden.creada."""
+    with _lock:
+        return _habitacion_por_orden.get(orden_id)
 
 
 def _listar_avisos() -> list:
@@ -208,22 +239,28 @@ async def marcar_notificacion_leida(aviso_id: str):
 
 @app.get("/salud")
 async def salud():
-    """Estado del servicio para el PanelSalud.
+    """Estado del servicio para el PanelSalud y para los health checks del gateway.
 
-    IMPORTANTE: consumidor.py no expone ningún estado interno de la conexión
-    (ni una bandera, ni un evento, ni la conexión misma), solo la tarea de
-    fondo que la ejecuta. Por eso "rabbitmq" NO puede afirmar "conectado":
-    la tarea permanece viva tanto mientras está conectada y consumiendo
-    como mientras está reintentando conectarse (o reconectando tras una
-    caída, vía connect_robust). Sin modificar consumidor.py no hay forma
-    fiable de distinguir esos dos casos, así que este campo solo reporta si
-    el proceso de consumo sigue en ejecución ("activo") o si terminó o fue
-    cancelado ("detenido") — no si RabbitMQ está realmente conectado.
+    Se distinguen dos cosas que antes se confundían en un solo campo:
+
+      - `consumidor`: si la tarea de fondo sigue viva. Puede estar viva tanto
+        consumiendo como reintentando conectarse.
+      - `rabbitmq`: si hay conexión abierta al broker AHORA. consumidor.py la
+        expone con `conexion_activa()`.
+
+    Devuelve 200 aunque RabbitMQ esté caído: el servicio sigue sirviendo la
+    bandeja con lo que ya tiene en memoria, y los eventos pendientes se acumulan
+    en la cola durable hasta que el broker vuelva. Sacarlo del balanceo del
+    gateway por eso dejaría a la UI sin bandeja sin necesidad.
     """
+    from consumidor import conexion_activa
+
     consumidor_vivo = _consumidor_task is not None and not _consumidor_task.done()
+    broker_conectado = conexion_activa()
 
     return {
-        "estado": "ok",
-        "rabbitmq": "activo" if consumidor_vivo else "detenido",
+        "estado": "ok" if (consumidor_vivo and broker_conectado) else "degradado",
+        "consumidor": "activo" if consumidor_vivo else "detenido",
+        "rabbitmq": "conectado" if broker_conectado else "desconectado",
         "avisosEnMemoria": len(_listar_avisos()),
     }

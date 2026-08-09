@@ -3,10 +3,10 @@
 Sistema de gestión de órdenes de mantenimiento para un hotel de 400 habitaciones,
 construido como un conjunto de microservicios.
 
-> **Estado:** cuatro de los seis servicios están implementados
-> (`habitaciones`, `ordenes`, `tecnicos`, `gateway`). `notificaciones` y `ui`
-> siguen siendo esqueleto: solo tienen un bloque de comentario que describe qué
-> debe implementarse en ellos.
+> **Estado:** cinco de los seis servicios están implementados
+> (`habitaciones`, `ordenes`, `tecnicos`, `notificaciones`, `gateway`). Solo `ui`
+> sigue siendo esqueleto: tiene un bloque de comentario que describe qué debe
+> implementarse en él.
 
 ---
 
@@ -86,11 +86,11 @@ cp .env.example .env      # ajustar si hace falta; los valores de ejemplo sirven
 docker compose up --build
 ```
 
-Levanta ocho contenedores: RabbitMQ, tres PostgreSQL y los cuatro servicios
-implementados. `notificaciones` y `ui` **no arrancan** porque todavía son
-esqueleto y sus `Dockerfile` no construyen; están declarados con el perfil
-`pendiente` para que su ausencia no impida levantar el resto. Cuando se
-implementen, se les quita la línea `profiles:` y entran solos.
+Levanta nueve contenedores: RabbitMQ, tres PostgreSQL y los cinco servicios
+implementados. Solo `ui` **no arranca**, porque todavía es esqueleto y su
+`Dockerfile` no construye; está declarado con el perfil `pendiente` para que su
+ausencia no impida levantar el resto. Cuando se implemente, se le quita la línea
+`profiles:` y entra solo.
 
 Todo entra por el gateway, que es el único puerto publicado hacia el host:
 

@@ -1,26 +1,31 @@
-# PROPÓSITO: construir la imagen del servicio notificaciones. Define cómo se
-#   instala el entorno de Python 3.12 y cómo se ejecuta FastAPI en el contenedor.
+# Imagen del servicio notificaciones (Python 3.12 / FastAPI).
 #
-# DEBE CONTENER:
-#   1. Imagen base python:3.12-slim.
-#   2. Variables de entorno de Python: no escribir .pyc y salida sin búfer, para
-#      ver los logs en tiempo real.
-#   3. Directorio de trabajo de la aplicación.
-#   4. Copia de requirements.txt e instalación con pip antes del código, para
-#      aprovechar la caché de capas.
-#   5. Copia del resto de los archivos .py.
-#   6. EXPOSE del puerto interno de escucha.
-#   7. CMD que arranque uvicorn apuntando a main:app con host 0.0.0.0.
-#
-# NO DEBE CONTENER:
-#   - Credenciales de RabbitMQ; llegan por variables de entorno desde compose.
-#   - Ningún volumen ni ruta de persistencia: los avisos viven en memoria y se
-#     pierden al reiniciar, por decisión de arquitectura.
-#   - Un cliente de PostgreSQL instalado en el sistema.
-#   - La bandera --reload de uvicorn.
-#
-# RELACIONADO:
-#   - requirements.txt
-#   - main.py (módulo que ejecuta uvicorn)
-#   - docker-compose.yml → servicio "notificaciones" (depends_on: rabbitmq, y
-#     NINGUNA base de datos)
+# Sin credenciales: llegan por variables de entorno desde docker-compose.yml.
+# Sin volúmenes ni rutas de persistencia: los avisos viven en memoria y se
+# pierden al reiniciar, por decisión de arquitectura — este es el servicio que
+# se apaga en la defensa para mostrar que el resto sigue funcionando sin él.
+
+FROM python:3.12-slim
+
+# Sin .pyc y con salida sin búfer: los logs aparecen en tiempo real en
+# `docker logs`.
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# requirements primero, para aprovechar la caché de capas.
+COPY requirements.txt ./
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
+
+COPY *.py ./
+
+# Usuario sin privilegios.
+RUN useradd --create-home --uid 1000 notificaciones
+USER notificaciones
+
+EXPOSE 8080
+
+# Sin --reload: esa bandera es solo para desarrollo local.
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
