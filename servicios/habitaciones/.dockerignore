@@ -1,18 +1,28 @@
-# PROPÓSITO: reducir el contexto que Docker envía al construir la imagen de
-#   habitaciones. Sin esto, se copian binarios locales que rompen la caché y
-#   pueden pisar los compilados dentro del contenedor.
+# Reduce el contexto de build y evita que binarios locales pisen los del
+# contenedor.
 #
-# DEBE CONTENER (patrones a escribir cuando se implemente):
-#   1. bin/ y obj/ — compilados locales de Windows/Linux que NO deben viajar.
-#   2. **/*.user y archivos de Visual Studio (.vs/).
-#   3. appsettings.Development.json si llegara a tener datos locales.
-#   4. Dockerfile y .dockerignore mismos (no hacen falta dentro de la imagen).
-#   5. README.md y documentación.
-#
-# NO DEBE CONTENER:
-#   - El .csproj ni los archivos .cs; son justamente lo que se necesita copiar.
-#   - Patrones de Python o Node; este contexto solo tiene el proyecto .NET.
-#
-# RELACIONADO:
-#   - Dockerfile (este archivo define su contexto de build)
-#   - .gitignore de la raíz (mismo objetivo, distinto destinatario)
+# El .csproj y los .cs NO se excluyen: son justamente lo que hay que copiar.
+
+# Compilados locales
+bin/
+obj/
+publish/
+TestResults/
+
+# Editor
+*.user
+*.suo
+.vs/
+.idea/
+.vscode/
+
+# Configuración local
+appsettings.Development.json
+
+# Herramientas de desarrollo (migraciones), no hacen falta en la imagen
+.config/
+
+# No aportan nada a la imagen
+Dockerfile
+.dockerignore
+README.md
