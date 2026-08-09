@@ -16,23 +16,24 @@
   "ocurridoEn": "2026-08-08T14:32:10.000Z",
 
   "ordenId": "b7e2f4a0-2222-4c3d-8e91-1f2a3b4c5d60",
-  "numeroHabitacion": 314,
-  "tipoFalla": "AIRE",
+  "habitacionId": "c8d3a5b1-6666-4a7b-9d42-5e6f708a9005",
+  "habitacionNumero": 314,
+  "tipoFalla": "AIRE_ACONDICIONADO",
   "descripcion": "El aire acondicionado no enfría y gotea sobre la alfombra.",
   "prioridad": "ALTA",
   "reportadoPor": "recepcion.turno.noche",
-  "estado": "ABIERTA",
 
   "_valores_permitidos": {
-    "tipoFalla": ["AIRE", "PLOMERIA", "CERRADURA"],
+    "tipoFalla": ["AIRE_ACONDICIONADO", "PLOMERIA", "CERRADURA", "ELECTRICIDAD"],
     "prioridad": ["BAJA", "MEDIA", "ALTA"],
-    "estado": ["ABIERTA"],
-    "numeroHabitacion": "entero entre 1 y 400"
+    "habitacionNumero": "entero entre 1 y 400"
   },
 
   "_notas_por_campo": {
     "eventoId": "identificador único del mensaje; es la clave de idempotencia — un consumidor que lo vea dos veces debe procesarlo una sola vez",
     "ordenId": "identificador de la orden en el servicio ordenes; NO es la clave de idempotencia del mensaje",
+    "habitacionId": "identificador interno de la habitación en el servicio habitaciones; es la referencia estable",
+    "habitacionNumero": "número visible de la habitación; se copia dentro del evento para que notificaciones pueda redactar el aviso sin consultar a habitaciones",
     "tipoFalla": "tecnicos lo usa para elegir la especialidad; debe coincidir exactamente con las especialidades registradas",
     "ocurridoEn": "UTC, ISO-8601 con Z; nunca hora local del hotel"
   }
