@@ -1,25 +1,33 @@
-# PROPÓSITO: construir la imagen del servicio tecnicos. Define cómo se instala el
-#   entorno de Python 3.12 y cómo se ejecuta FastAPI dentro del contenedor.
+# Imagen del servicio tecnicos (Python 3.12 / FastAPI).
 #
-# DEBE CONTENER:
-#   1. Imagen base python:3.12-slim.
-#   2. Variables de entorno de Python: no escribir .pyc y salida sin búfer, para
-#      que los logs aparezcan en tiempo real en docker logs.
-#   3. Directorio de trabajo de la aplicación.
-#   4. Copia de requirements.txt e instalación con pip ANTES de copiar el código,
-#      para aprovechar la caché de capas.
-#   5. Copia del resto de los archivos .py.
-#   6. EXPOSE del puerto interno de escucha.
-#   7. CMD que arranque uvicorn apuntando a main:app con host 0.0.0.0.
+# Ni la URL de la base ni las credenciales de RabbitMQ viven aquí: llegan por
+# variables de entorno desde docker-compose.yml.
 #
-# NO DEBE CONTENER:
-#   - La URL de la base ni las credenciales de RabbitMQ; llegan por variables de
-#     entorno desde docker-compose.yml.
-#   - Un script de espera hacia RabbitMQ o PostgreSQL; eso se resuelve con
-#     depends_on + healthcheck en compose y con reconexión en consumidor.py.
-#   - La bandera --reload de uvicorn, que es solo para desarrollo local.
-#
-# RELACIONADO:
-#   - requirements.txt
-#   - main.py (el módulo que ejecuta uvicorn)
-#   - docker-compose.yml → servicio "tecnicos" (depends_on: db-tecnicos, rabbitmq)
+# Tampoco hay script de espera hacia RabbitMQ o PostgreSQL: eso se resuelve con
+# depends_on + healthcheck en compose y con la reconexión de consumidor.py.
+
+FROM python:3.12-slim
+
+# Sin .pyc y con salida sin búfer: los logs aparecen en tiempo real en
+# `docker logs` en vez de quedarse atascados en el búfer.
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# requirements primero: mientras no cambien las dependencias, Docker reutiliza
+# la capa del pip install.
+COPY requirements.txt ./
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
+
+COPY *.py ./
+
+# Usuario sin privilegios.
+RUN useradd --create-home --uid 1000 tecnicos
+USER tecnicos
+
+EXPOSE 8080
+
+# Sin --reload: esa bandera es solo para desarrollo local.
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
