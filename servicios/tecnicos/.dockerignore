@@ -1,0 +1,25 @@
+# Reduce el contexto que Docker envía al construir la imagen de tecnicos.
+#
+# Los .py y requirements.txt NO se excluyen: son justamente lo que hay que copiar.
+
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Entornos virtuales locales: pesan mucho y sus binarios son de otra plataforma.
+venv/
+.venv/
+env/
+
+# Secretos locales
+.env
+
+# Editor
+.idea/
+.vscode/
+
+# No aportan nada a la imagen
+Dockerfile
+.dockerignore
+README.md
