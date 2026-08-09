@@ -12,11 +12,8 @@ documento explica el **significado** de cada uno.
 - Cada evento lleva versión en el nombre del contrato (`.v1.json`).
 - Un evento describe **algo que ya pasó**; nunca es una orden de hacer algo.
 
-Preguntas guía:
-
-- ¿Qué se hace cuando un contrato tenga que cambiar? ¿`v2` o campo opcional?
-- ¿Los eventos llevan todos los datos que el consumidor necesita, o el consumidor
-  vuelve a preguntar por HTTP? (decidir y justificar)
+- **¿Qué se hace cuando un contrato tenga que cambiar?:** Si el cambio es retrocompatible (ej. agregar un campo opcional), se mantiene la versión actual `v1`. Si es un cambio de ruptura (breaking change), se publica una nueva versión del contrato `v2` (ej. `orden.creada.v2.json`) y se migran los productores y consumidores.
+- **¿Los eventos llevan todos los datos necesarios o el consumidor pregunta por HTTP?:** Los eventos llevan todos los datos necesarios en su payload (*event-carried state transfer*). Esto evita llamadas HTTP síncronas de retorno (*query back*) y acoplamiento temporal entre servicios.
 
 ---
 
@@ -35,7 +32,7 @@ Qué hace cada consumidor:
   publica `orden.asignada`.
 - `notificaciones`: avisa a recepción que la habitación quedó bloqueada.
 
-Pregunta guía: ¿qué pasa si **no hay** ningún técnico disponible?
+- **¿Qué pasa si no hay ningún técnico disponible?:** No se publica el evento `orden.asignada`. La orden permanece en estado `ABIERTA` en el servicio `ordenes` hasta que se registre/incorpore un técnico del turno correspondiente o se ejecute un reintento manual/periódico.
 
 ---
 
@@ -48,8 +45,7 @@ Pregunta guía: ¿qué pasa si **no hay** ningún técnico disponible?
 | **Contrato** | `contratos/orden.asignada.v1.json` |
 | **Se publica cuando** | el asignador eligió un técnico concreto |
 
-Pregunta guía: ¿por qué la asignación la decide `tecnicos` y no `ordenes`, si
-`ordenes` es quien orquesta el caso de uso?
+- **¿Por qué la asignación la decide `tecnicos` y no `ordenes`?:** Porque las reglas sobre turnos, disponibilidad y especialidades pertenecen exclusivamente al contexto de `tecnicos`. Si `ordenes` tomara la decisión, violaría la propiedad de los datos y tendría que duplicar la lógica de gestión de personal.
 
 ---
 
@@ -62,7 +58,7 @@ Pregunta guía: ¿por qué la asignación la decide `tecnicos` y no `ordenes`, s
 | **Contrato** | `contratos/orden.resuelta.v1.json` |
 | **Se publica cuando** | la orden pasó a `RESUELTA` y la habitación volvió a `DISPONIBLE` |
 
-Pregunta guía: ¿la habitación se libera antes o después de publicar el evento?
+- **¿La habitación se libera antes o después de publicar el evento?:** La habitación se libera ANTES de publicar el evento, de forma que al recibir `orden.resuelta`, el consumidor `notificaciones` asuma con certeza que la habitación ya está liberada en `habitaciones`.
 
 ---
 
@@ -74,16 +70,13 @@ Pregunta guía: ¿la habitación se libera antes o después de publicar el event
 | `notificaciones.eventos` | `orden.*` | `notificaciones` |
 | `ordenes.orden-asignada` | `orden.asignada` | `ordenes` |
 
-Pregunta guía: `notificaciones` usa el comodín `orden.*` — ¿qué gana y qué riesgo
-corre cuando se agregue un evento nuevo?
+- **`notificaciones` usa el comodín `orden.*` — ¿qué gana y qué riesgo corre?:** Gana la capacidad de suscribirse automáticamente a cualquier evento relativo a órdenes sin reconfigurar bindings. El riesgo es recibir eventos nuevos cuyo esquema no conoce y fallar en tiempo de ejecución si no cuenta con un manejador defensivo.
 
 ---
 
 ## Entrega e idempotencia
 
-Responder aquí:
+1. **Garantía asumida:** *At-least-once* (al menos una vez). La red o el broker pueden entregar mensajes duplicados.
+2. **Idempotencia en `tecnicos`:** Si recibe dos veces `orden.creada`, no asigna dos técnicos. Se utiliza el campo `eventoId` como clave de idempotencia (junto con la comprobación de si `ordenId` ya está asignada) para ignorar el duplicado.
+3. **Mensajes con fallos persistentes:** Se reintentan un número finito de veces. Si continúan fallando, se envían a una cola de mensajes muertos (Dead Letter Queue - DLQ) para no bloquear el consumo de la cola principal.
 
-1. ¿Qué garantía se asume: *at-least-once* o *at-most-once*?
-2. Si `tecnicos` recibe dos veces `orden.creada`, ¿asigna dos técnicos? ¿Qué campo
-   se usa como clave para descartar el duplicado?
-3. ¿Qué pasa con un mensaje que falla siempre? (política de reintento / descarte)
