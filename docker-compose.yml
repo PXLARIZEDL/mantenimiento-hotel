@@ -7,14 +7,14 @@
 # Ningún valor va escrito aquí: todo viene de .env mediante ${VARIABLE}.
 #
 # ---------------------------------------------------------------------------
-# SERVICIOS TODAVÍA NO IMPLEMENTADOS
+# SERVICIO TODAVÍA NO IMPLEMENTADO
 # ---------------------------------------------------------------------------
-# notificaciones y ui siguen siendo esqueleto: sus Dockerfile son un bloque de
-# comentario y NO construyen. Están declarados abajo con el perfil "pendiente",
-# así que `docker compose up` los ignora y el resto del sistema levanta igual.
+# ui sigue siendo esqueleto: su Dockerfile es un bloque de comentario y NO
+# construye. Está declarado abajo con el perfil "pendiente", así que
+# `docker compose up` lo ignora y el resto del sistema levanta igual.
 #
-# Cuando se implementen, se les quita la línea `profiles:` y entran solos.
-# Para intentar levantarlos igual: `docker compose --profile pendiente up`.
+# Cuando se implemente, se le quita la línea `profiles:` y entra solo.
+# Para intentar levantarlo igual: `docker compose --profile pendiente up`.
 
 name: mantenimiento-hotel
 
@@ -165,10 +165,6 @@ services:
     networks: [hotel]
 
   notificaciones:
-    # PENDIENTE: el Dockerfile todavía es un bloque de comentario y no
-    # construye. Con este perfil, `docker compose up` lo ignora.
-    # Al implementarlo, borrar la línea `profiles`.
-    profiles: ["pendiente"]
     build: ./servicios/notificaciones
     container_name: hotel-notificaciones
     environment:

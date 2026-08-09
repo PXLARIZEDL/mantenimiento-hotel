@@ -1,0 +1,21 @@
+# Reduce el contexto que Docker envía al construir la imagen de notificaciones.
+#
+# Los .py y requirements.txt NO se excluyen: son justamente lo que hay que copiar.
+
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+venv/
+.venv/
+env/
+
+.env
+
+.idea/
+.vscode/
+
+Dockerfile
+.dockerignore
+README.md
