@@ -50,11 +50,17 @@ from plantillas import PLANTILLAS_POR_TIPO_EVENTO
 #   agregar_aviso(aviso: dict) -> None
 # Si main.py termina usando otros nombres, este import debe ajustarse
 # cuando se implemente ese archivo (no se toca aquí de antemano).
-from main import agregar_aviso, existe_evento_id
+from main import (
+    agregar_aviso,
+    existe_evento_id,
+    habitacion_de_orden,
+    recordar_habitacion,
+)
+from plantillas import HABITACION_DESCONOCIDA, aviso_por_defecto
 
 logger = logging.getLogger("notificaciones.consumidor")
 
-EXCHANGE_NOMBRE = "hotel.eventos"
+EXCHANGE_NOMBRE = os.environ.get("EXCHANGE", "hotel.eventos")
 COLA_NOMBRE = "notificaciones.eventos"
 ROUTING_KEY_COMODIN = "orden.*"
 
@@ -64,22 +70,39 @@ ESPERA_MAXIMA_SEGUNDOS = 30
 
 PREFETCH_COUNT = 10
 
+# Conexión viva, para que main.py pueda reportar en /salud si el broker está
+# realmente conectado y no solo si la tarea de fondo sigue corriendo. La nota de
+# salud() en main.py describía justamente esta carencia.
+_conexion: "aio_pika.abc.AbstractRobustConnection | None" = None
+
+
+def conexion_activa() -> bool:
+    """Si hay conexión abierta al broker ahora mismo."""
+    return _conexion is not None and not _conexion.is_closed
+
 
 def _url_rabbitmq() -> str:
     """Arma la URL de conexión desde variables de entorno.
 
-    Se asume RABBITMQ_URL como variable principal (formato amqp://usuario:
-    clave@host:puerto/vhost), coherente con la regla de "cero credenciales
-    en el código". Si el equipo prefiere variables separadas
-    (RABBITMQ_HOST, RABBITMQ_USER, etc.), avisar para ajustar esta función
-    únicamente; el resto del archivo no depende de ese detalle.
+    Acepta RABBITMQ_URL completa si está definida. Si no, la construye a partir
+    de las variables separadas (RABBITMQ_HOST, RABBITMQ_USUARIO, ...), que es lo
+    que docker-compose.yml ya le pasa al resto de los servicios.
     """
     url = os.environ.get("RABBITMQ_URL")
-    if not url:
+    if url:
+        return url
+
+    host = os.environ.get("RABBITMQ_HOST")
+    if not host:
         raise RuntimeError(
-            "Falta la variable de entorno RABBITMQ_URL para conectar a RabbitMQ."
+            "Falta RABBITMQ_URL o RABBITMQ_HOST para conectar a RabbitMQ."
         )
-    return url
+
+    puerto = os.environ.get("RABBITMQ_PUERTO", "5672")
+    usuario = os.environ.get("RABBITMQ_USUARIO", "guest")
+    contrasena = os.environ.get("RABBITMQ_CONTRASENA", "guest")
+
+    return f"amqp://{usuario}:{contrasena}@{host}:{puerto}/"
 
 
 async def _conectar_con_reintentos() -> aio_pika.RobustConnection:
@@ -128,19 +151,35 @@ def _procesar_evento(cuerpo_bytes: bytes) -> None:
         )
         return
 
+    # ¿De qué habitación habla este evento?
+    #
+    # Solo orden.creada trae habitacionNumero. Los otros dos contratos traen
+    # ordenId pero no el cuarto, así que se resuelve correlacionando: se recuerda
+    # el número al ver la creación y se busca al ver los siguientes.
+    orden_id = evento.get("ordenId")
+    numero_habitacion = HABITACION_DESCONOCIDA
+
+    if tipo_evento == "orden.creada":
+        numero_habitacion = evento.get("habitacionNumero", HABITACION_DESCONOCIDA)
+        if orden_id and numero_habitacion != HABITACION_DESCONOCIDA:
+            recordar_habitacion(orden_id, numero_habitacion)
+    elif orden_id:
+        numero_habitacion = habitacion_de_orden(orden_id) or HABITACION_DESCONOCIDA
+
     plantilla = PLANTILLAS_POR_TIPO_EVENTO.get(tipo_evento)
     if plantilla is None:
         # Riesgo aceptado del binding "orden.*": puede llegar un tipoEvento
-        # futuro sin plantilla propia. Se registra y no se genera aviso.
+        # futuro sin plantilla propia. Se registra un aviso genérico en vez de
+        # perderlo, que es justo lo que exige el comodín para no fallar.
         logger.info(
             "Evento de tipo desconocido '%s' (eventoId=%s) recibido por el "
-            "binding comodín orden.*; se registra sin generar aviso.",
+            "binding comodín orden.*; se usa la plantilla por defecto.",
             tipo_evento,
             evento_id,
         )
-        return
+        plantilla = aviso_por_defecto
 
-    aviso = plantilla(evento)
+    aviso = plantilla(evento, numero_habitacion)
     agregar_aviso(aviso)
     logger.info("Aviso generado para eventoId=%s (%s).", evento_id, tipo_evento)
 
@@ -177,7 +216,10 @@ async def iniciar_consumidor() -> None:
     No bloquea el event loop de FastAPI: aio_pika entrega los mensajes vía
     callback sobre el mismo loop, sin necesitar un hilo o proceso aparte.
     """
+    global _conexion
+
     conexion = await _conectar_con_reintentos()
+    _conexion = conexion
     canal = await conexion.channel()
     await canal.set_qos(prefetch_count=PREFETCH_COUNT)
 
