@@ -64,7 +64,9 @@ export default function Habitaciones() {
 
       <div className="resumen">
         {ESTADOS.map((e) => (
-          <div key={e} className="dato">
+          // La franja del contador usa el MISMO color que el cuarto en la
+          // rejilla, para que el resumen y el mapa se lean como una sola cosa.
+          <div key={e} className={`dato ${COLOR[e]}`}>
             <div className="n">{resumen[e] ?? 0}</div>
             <div className="r">{e.replace(/_/g, ' ')}</div>
           </div>

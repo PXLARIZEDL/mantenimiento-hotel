@@ -13,12 +13,15 @@ import ListaOrdenes from './componentes/ListaOrdenes.jsx'
 import BandejaNotificaciones from './componentes/BandejaNotificaciones.jsx'
 import PanelSalud from './componentes/PanelSalud.jsx'
 
+// Los iconos son emoji a propósito: se ven igual en cualquier máquina y no
+// obligan a bajar una fuente de iconos, que el proyecto no podría cargar sin
+// internet.
 const SECCIONES = [
-  { id: 'nueva', titulo: 'Reportar falla', Componente: NuevaOrden },
-  { id: 'ordenes', titulo: 'Órdenes', Componente: ListaOrdenes },
-  { id: 'habitaciones', titulo: 'Habitaciones', Componente: Habitaciones },
-  { id: 'bandeja', titulo: 'Avisos', Componente: BandejaNotificaciones },
-  { id: 'salud', titulo: 'Salud del sistema', Componente: PanelSalud },
+  { id: 'nueva', titulo: 'Reportar falla', icono: '📝', Componente: NuevaOrden },
+  { id: 'ordenes', titulo: 'Órdenes', icono: '🧾', Componente: ListaOrdenes },
+  { id: 'habitaciones', titulo: 'Habitaciones', icono: '🏨', Componente: Habitaciones },
+  { id: 'bandeja', titulo: 'Avisos', icono: '🔔', Componente: BandejaNotificaciones },
+  { id: 'salud', titulo: 'Salud del sistema', icono: '💓', Componente: PanelSalud },
 ]
 
 /**
@@ -60,7 +63,7 @@ export default function App() {
     <>
       <header className="principal">
         <div className="contenedor">
-          <h1>Mantenimiento — Hotel</h1>
+          <h1><span aria-hidden="true">🛎️</span> Mantenimiento — Hotel</h1>
           <p>Gestión de órdenes de mantenimiento · 400 habitaciones</p>
 
           <nav className="pestanas">
@@ -70,6 +73,7 @@ export default function App() {
                 onClick={() => setSeccion(s.id)}
                 aria-current={s.id === seccion ? 'page' : undefined}
               >
+                <span aria-hidden="true">{s.icono}</span>
                 {s.titulo}
               </button>
             ))}
