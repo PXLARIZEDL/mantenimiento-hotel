@@ -185,13 +185,11 @@ app = FastAPI(
     version="1.0.0",
     description=(
         "Servicio de notificaciones para recepción del hotel.\n\n"
-        "**Aviso importante:** los avisos se almacenan ÚNICAMENTE EN MEMORIA "
-        "(máximo " + str(MAX_AVISOS) + " avisos) y se PIERDEN al reiniciar el "
-        "contenedor. Esto es una decisión intencional del proyecto, no un "
-        "descuido: este es el servicio que se apaga durante la defensa para "
-        "demostrar que el resto del sistema sigue funcionando sin él. Los "
-        "eventos pendientes quedan acumulados en la cola durable de "
-        "RabbitMQ y se procesan solos al volver a levantar el servicio."
+        "**Aviso importante:** los avisos se guardan ÚNICAMENTE EN MEMORIA "
+        "(máximo " + str(MAX_AVISOS) + ") y se PIERDEN al reiniciar el "
+        "contenedor. Es intencional: este servicio no tiene base de datos "
+        "propia. Lo que no alcance a procesar queda esperando en la cola "
+        "durable de RabbitMQ y se recupera solo al volver a levantarlo."
     ),
     lifespan=lifespan,
 )
