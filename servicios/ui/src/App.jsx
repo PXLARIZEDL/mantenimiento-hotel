@@ -7,6 +7,7 @@
 
 import { Component, useState } from 'react'
 
+import Ingreso from './componentes/Ingreso.jsx'
 import Habitaciones from './componentes/Habitaciones.jsx'
 import NuevaOrden from './componentes/NuevaOrden.jsx'
 import ListaOrdenes from './componentes/ListaOrdenes.jsx'
@@ -23,6 +24,11 @@ const SECCIONES = [
   { id: 'bandeja', titulo: 'Avisos', icono: '🔔', Componente: BandejaNotificaciones },
   { id: 'salud', titulo: 'Salud del sistema', icono: '💓', Componente: PanelSalud },
 ]
+
+// Se recuerda en el navegador para no volver a preguntar en cada recarga. Es
+// una preferencia de esta terminal, no una sesión: no hay token ni nada que
+// caduque.
+const CLAVE_USUARIO = 'mantenimiento.usuario'
 
 /**
  * Evita que un fallo de render deje la pantalla en blanco. Sin esto, un error
@@ -54,7 +60,21 @@ class Barrera extends Component {
 }
 
 export default function App() {
+  const [usuario, setUsuario] = useState(() => localStorage.getItem(CLAVE_USUARIO) ?? '')
   const [seccion, setSeccion] = useState('nueva')
+
+  function entrar(nombre) {
+    localStorage.setItem(CLAVE_USUARIO, nombre)
+    setUsuario(nombre)
+  }
+
+  function salir() {
+    localStorage.removeItem(CLAVE_USUARIO)
+    setUsuario('')
+    setSeccion('nueva')
+  }
+
+  if (!usuario) return <Ingreso onEntrar={entrar} />
 
   const activa = SECCIONES.find((s) => s.id === seccion) ?? SECCIONES[0]
   const Pantalla = activa.Componente
@@ -63,8 +83,19 @@ export default function App() {
     <>
       <header className="principal">
         <div className="contenedor">
-          <h1><span aria-hidden="true">🛎️</span> Mantenimiento — Hotel</h1>
-          <p>Gestión de órdenes de mantenimiento · 400 habitaciones</p>
+          <div className="barra-superior">
+            <div>
+              <h1><span aria-hidden="true">🛎️</span> Mantenimiento — Hotel</h1>
+              <p>Gestión de órdenes de mantenimiento · 400 habitaciones</p>
+            </div>
+
+            <div className="usuario">
+              <span className="saludo">
+                Bienvenido, <strong>{usuario}</strong>
+              </span>
+              <button className="suave" onClick={salir}>Salir</button>
+            </div>
+          </div>
 
           <nav className="pestanas">
             {SECCIONES.map((s) => (
@@ -83,9 +114,12 @@ export default function App() {
 
       <main className="contenedor">
         {/* La barrera se reinicia al cambiar de pestaña: un error en una
-            pantalla no debe dejar inutilizadas las otras. */}
+            pantalla no debe dejar inutilizadas las otras.
+
+            usuario va a todas: la única que lo usa es NuevaOrden, para
+            rellenar quién reporta. Las demás lo ignoran. */}
         <Barrera key={seccion}>
-          <Pantalla />
+          <Pantalla usuario={usuario} />
         </Barrera>
       </main>
     </>

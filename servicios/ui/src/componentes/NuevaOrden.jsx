@@ -25,11 +25,14 @@ const INICIAL = {
   tipoFalla: 'AIRE_ACONDICIONADO',
   descripcion: '',
   prioridad: 'MEDIA',
-  reportadoPor: 'recepcion',
+  reportadoPor: '',
 }
 
-export default function NuevaOrden() {
-  const [datos, setDatos] = useState(INICIAL)
+// `usuario` viene del ingreso. Se usa para rellenar quién reporta en vez de
+// hacer que se escriba a mano en cada falla, pero el campo sigue siendo
+// editable: quien está en la terminal puede estar reportando por otra persona.
+export default function NuevaOrden({ usuario = '' }) {
+  const [datos, setDatos] = useState({ ...INICIAL, reportadoPor: usuario })
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState(null)
   const [creada, setCreada] = useState(null)
@@ -62,7 +65,7 @@ export default function NuevaOrden() {
         tipoFalla: datos.tipoFalla,
         descripcion: datos.descripcion.trim(),
         prioridad: datos.prioridad,
-        reportadoPor: datos.reportadoPor.trim() || 'recepcion',
+        reportadoPor: datos.reportadoPor.trim() || usuario || 'recepcion',
       })
       setCreada(orden)
       setDatos({ ...INICIAL, reportadoPor: datos.reportadoPor })
