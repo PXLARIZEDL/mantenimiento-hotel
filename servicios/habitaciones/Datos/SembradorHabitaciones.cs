@@ -14,8 +14,8 @@ public sealed class OpcionesInventario
 }
 
 /// <summary>
-/// Siembra el inventario inicial del hotel. Sin las 400 habitaciones no hay
-/// caso de uso que demostrar: ninguna orden se puede crear.
+/// Siembra el inventario inicial del hotel. Sin las 400 habitaciones no se
+/// puede crear ninguna orden, porque siempre se reportan contra un cuarto.
 /// </summary>
 public static class SembradorHabitaciones
 {
