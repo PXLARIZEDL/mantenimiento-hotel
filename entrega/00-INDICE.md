@@ -34,6 +34,7 @@ Reparto de puntos: **15 pts** el trabajo, **10 pts** la defensa.
 | [04-guion-de-defensa.md](04-guion-de-defensa.md) | Qué mostrar, en qué orden y qué comandos escribir |
 | [05-para-la-presentacion.md](05-para-la-presentacion.md) | Guion de diapositivas y lo que resultó más interesante |
 | [06-estado-y-pendientes.md](06-estado-y-pendientes.md) | Qué funciona, qué falta y qué está mal a propósito |
+| [07-manual-de-estudio.md](07-manual-de-estudio.md) | Guía de estudio del equipo, con ficha por persona |
 
 ---
 
