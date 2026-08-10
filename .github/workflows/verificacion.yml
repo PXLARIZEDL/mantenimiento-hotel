@@ -1,0 +1,145 @@
+# PROPÓSITO: verificar que lo que entra a main compila y pasa sus pruebas.
+#
+#   Existe aparte de limites.yml a propósito: aquel verifica los LÍMITES de
+#   contexto (un pull request, un servicio) y este verifica que el CÓDIGO
+#   funcione. Son dos preocupaciones distintas, y separarlas permite revertir
+#   una sin tocar la otra.
+#
+# QUÉ VERIFICA:
+#   1. Que ningún archivo de código esté guardado en una codificación distinta
+#      de UTF-8.
+#   2. Que las pruebas de tecnicos pasen.
+#   3. Que los tres servicios C# compilen, sin warnings.
+#
+# POR QUÉ EL PRIMERO:
+#   Un archivo .py guardado en cp1252 hace que Python 3 se niegue a leerlo
+#   (SyntaxError: Non-UTF-8 code), y pytest ni siquiera lo recolecta. Ya pasó
+#   una vez en este repositorio, y el CI dio verde igual porque no ejecutaba
+#   nada. En un proyecto políglota con editores distintos, es un riesgo real y
+#   la comprobación cuesta segundos.
+#
+# NO VERIFICA (todavía):
+#   - La UI: no tiene pruebas.
+#   - notificaciones: tampoco.
+#   - Que el sistema levante entero con docker compose: sería lo siguiente, pero
+#     tarda minutos y necesita levantar diez contenedores.
+
+name: Verificación
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+
+  codificacion:
+    name: Todo el código en UTF-8
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Buscar archivos que no sean UTF-8
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          import sys
+
+          # Solo archivos de texto que escribimos nosotros.
+          EXTENSIONES = {
+              ".py", ".cs", ".jsx", ".js", ".css", ".html",
+              ".json", ".md", ".yml", ".yaml", ".csproj", ".conf", ".inc",
+          }
+
+          # Carpetas generadas: no son nuestras y pueden traer cualquier cosa.
+          IGNORAR = {".git", "node_modules", "bin", "obj", "dist", ".vite"}
+
+          malos = []
+
+          for ruta in pathlib.Path(".").rglob("*"):
+              if not ruta.is_file() or ruta.suffix not in EXTENSIONES:
+                  continue
+              if IGNORAR & set(ruta.parts):
+                  continue
+
+              crudo = ruta.read_bytes()
+              try:
+                  crudo.decode("utf-8")
+              except UnicodeDecodeError as error:
+                  byte = crudo[error.start]
+                  malos.append((str(ruta), error.start, byte))
+
+          if malos:
+              for archivo, posicion, byte in malos:
+                  print(
+                      f"::error file={archivo}::No está en UTF-8: "
+                      f"byte 0x{byte:02x} en la posición {posicion}. "
+                      f"Volvé a guardarlo como UTF-8."
+                  )
+              print()
+              print("=" * 62)
+              print(" Hay archivos guardados en otra codificación (normalmente")
+              print(" cp1252 de Windows, que es lo que pasa al escribir eñes o")
+              print(" tildes con el editor mal configurado).")
+              print()
+              print(" En VS Code: abajo a la derecha, donde dice la codificación")
+              print(" -> Save with Encoding -> UTF-8")
+              print("=" * 62)
+              sys.exit(1)
+
+          print("OK: todo el código está en UTF-8.")
+          PY
+
+  pruebas-tecnicos:
+    name: Pruebas de tecnicos
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          # La misma versión que usa el Dockerfile del servicio.
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        working-directory: servicios/tecnicos
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: pytest
+        working-directory: servicios/tecnicos
+        run: pytest -v
+
+  compilacion-dotnet:
+    name: Compilar ${{ matrix.servicio }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      # Que falle uno no cancela a los otros: interesa ver TODOS los que
+      # rompieron, no solo el primero.
+      fail-fast: false
+      matrix:
+        servicio: [habitaciones, ordenes, gateway]
+
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Compilar en Release
+        working-directory: servicios/${{ matrix.servicio }}
+        # Los proyectos tienen TreatWarningsAsErrors: un warning rompe el build
+        # a propósito.
+        run: dotnet build --configuration Release
