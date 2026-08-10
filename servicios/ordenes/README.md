@@ -209,8 +209,20 @@ mismo mensaje a la vez, la restricción de unicidad es la última línea de defe
    separados; si el broker falla entre medio, la orden queda `ABIERTA` sin
    técnico. Lo correcto es guardar el evento en la misma transacción que la orden
    y despacharlo con un proceso aparte.
-2. **Sin tests.** No hay pruebas automatizadas: faltan al menos las de la máquina
-   de estados (`Modelos/Orden.cs`) y las del consumidor idempotente.
+2. **Solo hay pruebas del dominio.** `Pruebas/` cubre `Modelos/Orden.cs` con
+   **24 casos**, sin PostgreSQL ni RabbitMQ:
+
+   ```
+   cd Pruebas && dotnet test
+   ```
+
+   Cubren el alta, las tres transiciones válidas, las que deben fallar y la
+   tabla completa de `TransicionesOrden`. Que se puedan correr así es
+   consecuencia del diseño: la entidad no lleva atributos de EF ni publica
+   eventos, así que no conoce la red.
+
+   Falta cubrir el consumidor idempotente y los endpoints. Eso necesitaría una
+   base y un `WebApplicationFactory`: es otro tipo de prueba.
 3. **Reasignación.** Si llega un `orden.asignada` con otro `eventoId` para una
    orden que ya está `ASIGNADA`, se conserva la primera asignación y se registra
    un warning. `v1` no define reasignación.

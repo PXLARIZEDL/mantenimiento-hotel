@@ -8,8 +8,9 @@
 # QUÉ VERIFICA:
 #   1. Que ningún archivo de código esté guardado en una codificación distinta
 #      de UTF-8.
-#   2. Que las pruebas de tecnicos pasen.
+#   2. Que las pruebas de tecnicos pasen (pytest).
 #   3. Que los tres servicios C# compilen, sin warnings.
+#   4. Que las pruebas de ordenes pasen (xunit).
 #
 # POR QUÉ EL PRIMERO:
 #   Un archivo .py guardado en cp1252 hace que Python 3 se niegue a leerlo
@@ -143,3 +144,22 @@ jobs:
         # Los proyectos tienen TreatWarningsAsErrors: un warning rompe el build
         # a propósito.
         run: dotnet build --configuration Release
+
+  pruebas-ordenes:
+    name: Pruebas de ordenes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: dotnet test
+        # Prueban la maquina de estados de Modelos/Orden.cs, que no conoce la
+        # red: no hace falta PostgreSQL ni RabbitMQ.
+        working-directory: servicios/ordenes/Pruebas
+        run: dotnet test --configuration Release

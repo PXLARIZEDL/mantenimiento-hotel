@@ -19,6 +19,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!--
+      El SDK Web incluye **/*.cs por defecto, así que sin esto el servicio
+      intentaría compilar sus propias pruebas — y fallaría, porque no referencia
+      xunit. Las pruebas son un proyecto aparte: Pruebas/Ordenes.Pruebas.csproj.
+    -->
+    <Compile Remove="Pruebas/**" />
+    <Content Remove="Pruebas/**" />
+    <None Remove="Pruebas/**" />
+    <EmbeddedResource Remove="Pruebas/**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Base de datos propia del servicio. -->
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.10" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.10">

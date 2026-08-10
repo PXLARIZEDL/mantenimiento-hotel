@@ -103,9 +103,24 @@ anota si le hicieron ack o nack:
 > `Asignacion.orden_id` es la clave primaria, así que **una orden no se puede
 > reasignar** sin violar la unicidad. Hoy no ocurre, pero ahora está escrito.
 
-**Lo que falta:** los endpoints de `tecnicos`, los tres servicios C# y la UI.
-Nada de eso tiene una sola prueba — los C# sí se **compilan** en el CI, que no es
-lo mismo.
+`servicios/ordenes/Pruebas/` — **24 casos** de xunit sobre la máquina de
+estados de `Modelos/Orden.cs`, tampoco con infraestructura:
+
+| Grupo | Qué protege |
+|---|---|
+| Alta | Que nazca ABIERTA, sin técnico, con el id que recibe |
+| Transiciones válidas | ABIERTA → ASIGNADA → RESUELTA, y ABIERTA → RESUELTA |
+| Transiciones inválidas | Que RESUELTA sea terminal y que no se reasigne |
+| Tabla de transiciones | Las 7 combinaciones, una por una |
+
+> Una de esas pruebas fija el bug que se encontró al ejecutar: que la orden
+> **conserve el identificador que recibe** en vez de acuñar uno propio. Si
+> alguien lo revierte, ahora falla una prueba en vez de descubrirse con una
+> habitación bloqueada para siempre.
+
+**Lo que falta:** los endpoints de `tecnicos` y de `ordenes`, el consumidor de
+`ordenes`, el servicio `habitaciones` y la UI. `habitaciones` y `gateway` sí se
+**compilan** en el CI, que no es lo mismo que probarlos.
 
 ### 3. `CrearAsync` con 171 líneas
 

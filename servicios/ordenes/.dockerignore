@@ -23,6 +23,9 @@ appsettings.Development.json
 # migraciones en la máquina, no para ejecutar el servicio.
 .config/
 
+# Las pruebas no van a la imagen: se ejecutan en el CI, no en producción.
+Pruebas/
+
 # No aportan nada a la imagen
 Dockerfile
 .dockerignore
