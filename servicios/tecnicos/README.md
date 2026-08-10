@@ -163,9 +163,16 @@ se desincronizaron.
 
 ## Pendientes conocidos
 
-1. **Sin tests.** La regla de `asignador.py` está aislada justamente para poder
-   probarla sin infraestructura, pero el archivo de pruebas no existe todavía.
-   Iría con `pytest` en un `requirements-dev.txt` aparte.
+1. **Solo hay pruebas del asignador.** `test_asignador.py` cubre la regla de
+   negocio con 6 casos, sin levantar PostgreSQL ni RabbitMQ:
+
+   ```
+   pip install -r requirements.txt -r requirements-dev.txt
+   pytest
+   ```
+
+   Falta cubrir el consumidor (idempotencia, mensaje ilegible, reintento
+   acotado) y los endpoints. Eso sí necesitaría infraestructura o dobles.
 2. **Outbox.** La asignación se guarda y el evento se publica en dos pasos; si el
    broker falla entre medio, la orden queda asignada aquí pero `ordenes` nunca se
    entera. Se registra `critical`. Mismo pendiente que en `ordenes`.
