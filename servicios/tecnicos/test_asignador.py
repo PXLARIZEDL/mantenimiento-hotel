@@ -106,8 +106,7 @@ def test_tipo_de_falla_desconocido():
 def test_el_desempate_es_determinista():
     """A igualdad de carga gana el primero por nombre, siempre el mismo.
 
-    Importa para la defensa: la misma entrada tiene que dar la misma salida para
-    poder reproducir un caso concreto delante del profesor.
+    Si el desempate fuera al azar, este test no se podria escribir.
     """
     candidatos = [
         tecnico("Zoe", "CERRADURA", "MAÑANA", ordenes_abiertas=2),
