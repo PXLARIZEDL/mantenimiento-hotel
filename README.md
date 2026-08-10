@@ -3,10 +3,8 @@
 Sistema de gestión de órdenes de mantenimiento para un hotel de 400 habitaciones,
 construido como un conjunto de microservicios.
 
-> **Estado:** cinco de los seis servicios están implementados
-> (`habitaciones`, `ordenes`, `tecnicos`, `notificaciones`, `gateway`). Solo `ui`
-> sigue siendo esqueleto: tiene un bloque de comentario que describe qué debe
-> implementarse en él.
+> **Estado:** los seis servicios están implementados y el sistema levanta
+> completo con `docker compose up --build`.
 
 ---
 
@@ -86,16 +84,13 @@ cp .env.example .env      # ajustar si hace falta; los valores de ejemplo sirven
 docker compose up --build
 ```
 
-Levanta nueve contenedores: RabbitMQ, tres PostgreSQL y los cinco servicios
-implementados. Solo `ui` **no arranca**, porque todavía es esqueleto y su
-`Dockerfile` no construye; está declarado con el perfil `pendiente` para que su
-ausencia no impida levantar el resto. Cuando se implemente, se le quita la línea
-`profiles:` y entra solo.
+Levanta diez contenedores: RabbitMQ, tres PostgreSQL, los cinco servicios y la UI.
 
 Todo entra por el gateway, que es el único puerto publicado hacia el host:
 
 | Qué | Dónde |
 |---|---|
+| **Interfaz web** | **`http://localhost:5173`** |
 | API por el gateway | `http://localhost:8080` |
 | Salud agregada del sistema | `http://localhost:8080/salud` |
 | Consola de RabbitMQ | `http://localhost:15672` (`guest` / `guest`) |
