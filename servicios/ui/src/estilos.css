@@ -24,7 +24,7 @@
 
   /* Semánticos: cada estado del dominio tiene su color y se usa siempre el
      mismo, en toda la interfaz. */
-   --verde: #047857;
+  --verde: #047857;
   --amarillo: #d97706;
   --rojo: #e11d48;
   --azul: #0284c7;
