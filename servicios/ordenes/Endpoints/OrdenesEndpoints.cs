@@ -170,11 +170,11 @@ public static class OrdenesEndpoints
 
             case ResultadoHabitacion.NoDisponible:
                 // Respuesta a la pregunta guía del README: con el circuito
-                // abierto se devuelve 503, no 500. 503 dice "volvé a intentar";
+                // abierto se devuelve 503, no 500. 503 dice "vuelve a intentar";
                 // 500 dice "algo se rompió acá". El cliente puede reintentar.
                 return Results.Problem(
                     title: "Servicio de habitaciones no disponible",
-                    detail: $"{bloqueo.Detalle} La orden no se creó; volvé a intentarlo.",
+                    detail: $"{bloqueo.Detalle} La orden no se creó; vuelve a intentarlo.",
                     statusCode: StatusCodes.Status503ServiceUnavailable);
         }
 
