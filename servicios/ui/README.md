@@ -100,7 +100,7 @@ Con todo el sistema arriba: **http://localhost:5173**
 
 Las tres cosas que se ven mejor desde la interfaz:
 
-**1. La asignación es asincrónica.** Reportá una falla en *Reportar falla* y pasá
+**1. La asignación es asincrónica.** Reporta una falla en *Reportar falla* y pasa
 enseguida a *Órdenes*: aparece `ABIERTA` y, sin tocar nada, cambia sola a
 `ASIGNADA` con el nombre del técnico. Ese cambio lo produjo un evento que viajó
 por RabbitMQ hasta `tecnicos` y volvió.
@@ -121,7 +121,7 @@ docker compose start notificaciones
 los avisos que se perdió **aparecen solos** en la bandeja: quedaron esperando en
 la cola durable de RabbitMQ.
 
-**3. El circuit breaker.** Apagá `habitaciones` e intentá reportar una falla. Los
+**3. El circuit breaker.** Apaga `habitaciones` e intenta reportar una falla. Los
 primeros intentos tardan (timeout y reintentos); después el circuito abre y la
 respuesta pasa a ser inmediata, con un aviso claro de que la orden **no** se creó.
 

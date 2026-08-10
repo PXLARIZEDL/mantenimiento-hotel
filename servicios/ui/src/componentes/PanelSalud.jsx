@@ -108,20 +108,18 @@ export default function PanelSalud() {
       )}
 
       <div className="mensaje info" style={{ marginTop: 18 }}>
-        <strong>Para la demostración:</strong> apagá un servicio con{' '}
-        <code>docker compose stop notificaciones</code> y miralo caer aquí. El resto del
-        sistema sigue funcionando — se pueden seguir creando y resolviendo órdenes, y los
-        avisos pendientes se acumulan en la cola durable hasta que vuelva.
+        Si un servicio se cae, aparece aquí en rojo y el resto sigue trabajando: se pueden
+        seguir creando y resolviendo órdenes. Los avisos que queden pendientes se acumulan
+        en la cola y se procesan cuando vuelva.
       </div>
 
-      {/* El circuit breaker de ordenes hacia habitaciones existe y funciona,
-          pero ordenes no expone su estado por HTTP. Se dice en vez de
-          inventar un indicador que no tiene de dónde leer. */}
+      {/* ordenes no expone el estado del breaker por HTTP, así que no hay de
+          dónde leerlo. Mejor decirlo que pintar un indicador inventado. */}
       <div className="mensaje" style={{ border: '1px solid var(--borde)' }}>
-        El <strong>circuit breaker</strong> de <code>ordenes</code> hacia{' '}
-        <code>habitaciones</code> no se muestra aquí porque el servicio no expone su estado.
-        Se comprueba apagando <code>habitaciones</code> e intentando reportar una falla: tras
-        varios intentos fallidos el circuito abre y la respuesta pasa a ser inmediata.
+        El estado del <strong>circuit breaker</strong> hacia <code>habitaciones</code> no se
+        muestra: <code>ordenes</code> no lo expone por HTTP. Se nota igual cuando ese
+        servicio no responde — tras varios intentos fallidos, el error deja de tardar y
+        llega al instante.
       </div>
     </section>
   )
