@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Pruebas del DOMINIO de ordenes.
+
+    Prueban Modelos/Orden.cs, que no conoce la red ni la base: no hace falta
+    PostgreSQL, ni RabbitMQ, ni levantar la aplicación. Que eso sea posible es
+    consecuencia del diseño, no casualidad — la entidad no lleva atributos de EF
+    ni publica eventos.
+
+    No se prueban aquí los endpoints: eso necesitaría un WebApplicationFactory y
+    una base, y es un tipo de prueba distinto.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="xunit" Version="2.5.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Referencia al servicio que se prueba. Es la ÚNICA referencia de proyecto
+      permitida en el repositorio: un servicio nunca referencia a otro, pero sus
+      pruebas sí lo referencian a él.
+    -->
+    <ProjectReference Include="../Ordenes.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>
