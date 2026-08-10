@@ -163,21 +163,33 @@ se desincronizaron.
 
 ## Pendientes conocidos
 
-1. **Solo hay pruebas del asignador.** `test_asignador.py` cubre la regla de
-   negocio con 6 casos, sin levantar PostgreSQL ni RabbitMQ:
+1. **Faltan pruebas de los endpoints.** Hay **21**, y ninguna levanta
+   PostgreSQL ni RabbitMQ:
 
    ```
    pip install -r requirements.txt -r requirements-dev.txt
    pytest
    ```
 
-   Falta cubrir el consumidor (idempotencia, mensaje ilegible, reintento
-   acotado) y los endpoints. Eso sí necesitaría infraestructura o dobles.
+   | Archivo | Cubre |
+   |---|---|
+   | `test_asignador.py` | La regla: turno, desempate, sin técnico, falla inválida |
+   | `test_consumidor.py` | Idempotencia, forma de lo publicado, política de ack/nack |
+
+   El consumidor se prueba con **SQLite en memoria** y un mensaje falso que
+   anota si le hicieron ack o nack. Lo que falta son los endpoints de `main.py`.
+
 2. **Outbox.** La asignación se guarda y el evento se publica en dos pasos; si el
    broker falla entre medio, la orden queda asignada aquí pero `ordenes` nunca se
    entera. Se registra `critical`. Mismo pendiente que en `ordenes`.
+
 3. **Sin reasignación.** Si un técnico se enferma, no hay forma de mover sus
-   órdenes. `v1` no lo contempla.
+   órdenes. `v1` no lo contempla — y hay una restricción concreta que lo
+   respalda: `Asignacion.orden_id` es la **clave primaria**, así que un segundo
+   `orden.asignada` para la misma orden fallaría con violación de unicidad. Hoy
+   no ocurre porque `ordenes` publica un `orden.creada` por orden, pero es lo
+   primero que hay que cambiar si se admite reasignar.
+
 4. **La carga no baja nunca.** `ordenes_abiertas` cuenta todas las asignaciones
    históricas, porque este servicio no se entera de `orden.resuelta` — no está
    suscrito a ese evento. Con el tiempo el desempate se vuelve "quien lleva menos
