@@ -59,7 +59,7 @@ export default function Habitaciones() {
     <section className="tarjeta">
       <h2>Habitaciones</h2>
       <p className="ayuda">
-        El estado cambia por eventos que la UI no escucha: usá Actualizar para ver lo último.
+        El estado cambia por eventos que la UI no escucha: usa Actualizar para ver lo último.
       </p>
 
       <div className="resumen">
@@ -125,7 +125,7 @@ export default function Habitaciones() {
       {habitaciones.some((h) => h.estado === 'FUERA_DE_SERVICIO') && (
         <div className="mensaje info" style={{ marginTop: 16 }}>
           Los cuartos en rojo están bloqueados por una orden abierta. Pasá el cursor por
-          encima para ver cuáles, y mirá la pestaña <strong>Órdenes</strong> para el detalle.
+          encima para ver cuáles, y mira la pestaña <strong>Órdenes</strong> para el detalle.
         </div>
       )}
 

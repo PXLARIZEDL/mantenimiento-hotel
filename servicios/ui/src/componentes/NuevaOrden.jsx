@@ -145,7 +145,7 @@ export default function NuevaOrden({ usuario = '' }) {
             <>
               <strong>El servicio de habitaciones no responde.</strong>
               <div style={{ marginTop: 6 }}>
-                La orden <strong>no se creó</strong>. No se perdió nada: volvé a intentarlo
+                La orden <strong>no se creó</strong>. No se perdió nada: vuelve a intentarlo
                 en unos segundos.
               </div>
             </>
