@@ -68,13 +68,15 @@ manejo de reintentos. Se decidió documentarlo antes que implementarlo a medias.
 
 ### 2. Cobertura de pruebas incompleta
 
-**Lo que sí hay:** `servicios/tecnicos/test_asignador.py`, con **6 casos** sobre
-la regla de asignación. Se ejecutan en el CI.
+**Lo que sí hay: 21 pruebas en `servicios/tecnicos`**, ejecutadas en el CI.
+**Ninguna levanta PostgreSQL ni RabbitMQ.**
 
-Ninguno levanta PostgreSQL ni RabbitMQ, y eso es el punto: `asignador.py` recibe
-los candidatos como parámetro justamente para poder probarse sin infraestructura.
-**Es la prueba de que la separación de responsabilidades sirve para algo
-concreto**, no solo para quedar bien en un diagrama.
+Eso último es el punto, no una casualidad: `asignador.py` recibe los candidatos
+como parámetro y el consumidor hace el trabajo de base a través de una fábrica de
+sesiones sustituible. **Es la prueba de que la separación de responsabilidades
+sirve para algo concreto**, no solo para quedar bien en un diagrama.
+
+`test_asignador.py` — 6 casos sobre la regla:
 
 | Caso | Qué protege |
 |---|---|
@@ -85,12 +87,25 @@ concreto**, no solo para quedar bien en un diagrama.
 | Desempate determinista | Que se pueda reproducir un caso en la defensa |
 | Plantilla vacía | Que sea un caso normal, no un error |
 
-**Lo que falta:** el consumidor de `tecnicos` (idempotencia, mensaje ilegible,
-reintento acotado), los servicios C# y la UI. Nada de eso tiene una sola prueba.
+`test_consumidor.py` — 15 casos, con **SQLite en memoria** y un mensaje falso que
+anota si le hicieron ack o nack:
 
-Cubrir el consumidor es lo que más rendiría a continuación, porque la
-idempotencia es una de las preguntas más probables de la defensa y hoy solo se
-puede demostrar a mano.
+| Grupo | Qué protege |
+|---|---|
+| Idempotencia | Que el mismo `eventoId` dos veces no asigne dos técnicos, y que la clave sea el evento y no la orden |
+| Sin técnico | Que no se publique nada pero el evento quede registrado |
+| Forma de lo publicado | Que los campos coincidan **exactamente** con `orden.asignada.v1.json` y salgan en camelCase |
+| Política de ack/nack | Mensaje ilegible → descarte; primer fallo → reencola; segundo → descarta |
+| Versionado | Que un campo desconocido **no** rompa el consumidor |
+| Configuración | Que la URL del broker se arme de las variables que pasa compose |
+
+> Escribir estas pruebas destapó una restricción que no estaba documentada:
+> `Asignacion.orden_id` es la clave primaria, así que **una orden no se puede
+> reasignar** sin violar la unicidad. Hoy no ocurre, pero ahora está escrito.
+
+**Lo que falta:** los endpoints de `tecnicos`, los tres servicios C# y la UI.
+Nada de eso tiene una sola prueba — los C# sí se **compilan** en el CI, que no es
+lo mismo.
 
 ### 3. `CrearAsync` con 171 líneas
 
