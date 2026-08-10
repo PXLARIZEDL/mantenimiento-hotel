@@ -1,26 +1,19 @@
 {
-  "_PROPOSITO": "Declarar el proyecto de la UI, sus dependencias de npm y los comandos de desarrollo y construcción. Es el equivalente al .csproj de los servicios .NET y al requirements.txt de los servicios Python.",
-
-  "_DEBE_CONTENER": [
-    "1. name (ui o mantenimiento-hotel-ui), private en true, version y type module.",
-    "2. scripts: dev (vite), build (vite build) y preview (vite preview). El Dockerfile usa build.",
-    "3. dependencies: react y react-dom.",
-    "4. dependencies: react-router-dom si se decide navegar entre pantallas por ruta en vez de por pestañas locales.",
-    "5. devDependencies: vite y @vitejs/plugin-react.",
-    "6. Versiones fijadas, para que la imagen sea reproducible."
-  ],
-
-  "_NO_DEBE_CONTENER": [
-    "Bibliotecas de estado global (Redux, Zustand): cinco pantallas de lectura no lo justifican; mantenerlo simple.",
-    "Frameworks de componentes pesados ni paquetes de UI que no se pidieron.",
-    "Bibliotecas de mensajería: el navegador NO habla con RabbitMQ; la UI solo hace HTTP contra el gateway.",
-    "URLs de servicios ni configuración de entorno; eso va en variables de Vite leídas desde src/api.js.",
-    "Dependencias de servidor (express, node-fetch): en producción sirve nginx."
-  ],
-
-  "_RELACIONADO": [
-    "vite.config.js (configuración de la herramienta que estos scripts ejecutan)",
-    "Dockerfile (ejecuta npm ci y npm run build)",
-    "src/main.jsx (punto de entrada que Vite empaqueta)"
-  ]
+  "name": "mantenimiento-hotel-ui",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "vite": "5.4.11",
+    "@vitejs/plugin-react": "4.3.4"
+  }
 }

@@ -6,15 +6,8 @@
 #
 # Ningún valor va escrito aquí: todo viene de .env mediante ${VARIABLE}.
 #
-# ---------------------------------------------------------------------------
-# SERVICIO TODAVÍA NO IMPLEMENTADO
-# ---------------------------------------------------------------------------
-# ui sigue siendo esqueleto: su Dockerfile es un bloque de comentario y NO
-# construye. Está declarado abajo con el perfil "pendiente", así que
-# `docker compose up` lo ignora y el resto del sistema levanta igual.
-#
-# Cuando se implemente, se le quita la línea `profiles:` y entra solo.
-# Para intentar levantarlo igual: `docker compose --profile pendiente up`.
+# Levanta diez contenedores: RabbitMQ, tres bases PostgreSQL, los cinco
+# servicios y la UI. Ya no queda nada pendiente de implementar.
 
 name: mantenimiento-hotel
 
@@ -199,8 +192,6 @@ services:
     networks: [hotel]
 
   ui:
-    # PENDIENTE: igual que notificaciones, todavía es esqueleto.
-    profiles: ["pendiente"]
     build: ./servicios/ui
     container_name: hotel-ui
     ports:

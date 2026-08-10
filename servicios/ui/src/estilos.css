@@ -1,0 +1,153 @@
+/* Estilos globales. Sin CDN: el proyecto se levanta sin internet. */
+
+:root {
+  --fondo: #0f1419;
+  --panel: #1a222c;
+  --panel-2: #232d3a;
+  --borde: #2f3b4a;
+  --texto: #e6edf3;
+  --texto-suave: #9aa8b8;
+
+  --verde: #2ea043;
+  --amarillo: #d29922;
+  --rojo: #da3633;
+  --azul: #388bfd;
+  --gris: #6e7681;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+}
+
+.contenedor { max-width: 1180px; margin: 0 auto; padding: 0 16px 48px; }
+
+/* --- encabezado y pestañas --- */
+
+header.principal {
+  background: var(--panel);
+  border-bottom: 1px solid var(--borde);
+  padding: 14px 0 0;
+  margin-bottom: 22px;
+}
+header.principal h1 { margin: 0 0 2px; font-size: 19px; }
+header.principal p { margin: 0 0 12px; color: var(--texto-suave); font-size: 13px; }
+
+nav.pestanas { display: flex; gap: 4px; flex-wrap: wrap; }
+nav.pestanas button {
+  background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--texto-suave); padding: 9px 14px; cursor: pointer;
+  font-size: 14px; font-family: inherit;
+}
+nav.pestanas button:hover { color: var(--texto); }
+nav.pestanas button[aria-current="page"] {
+  color: var(--texto); border-bottom-color: var(--azul); font-weight: 600;
+}
+
+/* --- bloques --- */
+
+section.tarjeta {
+  background: var(--panel); border: 1px solid var(--borde);
+  border-radius: 8px; padding: 18px; margin-bottom: 18px;
+}
+section.tarjeta > h2 { margin: 0 0 4px; font-size: 16px; }
+section.tarjeta > p.ayuda { margin: 0 0 16px; color: var(--texto-suave); font-size: 13px; }
+
+.fila { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+.campo { display: flex; flex-direction: column; gap: 5px; }
+.campo label { font-size: 12px; color: var(--texto-suave); }
+
+input, select, textarea, button {
+  font-family: inherit; font-size: 14px;
+  background: var(--panel-2); color: var(--texto);
+  border: 1px solid var(--borde); border-radius: 6px; padding: 8px 10px;
+}
+textarea { resize: vertical; min-height: 66px; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--azul); outline-offset: -1px; }
+
+button.accion {
+  background: var(--azul); border-color: var(--azul);
+  color: #fff; font-weight: 600; cursor: pointer;
+}
+button.accion:disabled { opacity: .5; cursor: not-allowed; }
+button.suave { cursor: pointer; }
+button.suave:hover:not(:disabled) { background: var(--borde); }
+
+/* --- mensajes --- */
+
+.mensaje { border-radius: 6px; padding: 11px 13px; margin: 12px 0; font-size: 14px; }
+.mensaje.error { background: rgba(218, 54, 51, .13); border: 1px solid var(--rojo); }
+.mensaje.exito { background: rgba(46, 160, 67, .13); border: 1px solid var(--verde); }
+.mensaje.aviso { background: rgba(210, 153, 34, .12); border: 1px solid var(--amarillo); }
+.mensaje.info  { background: rgba(56, 139, 253, .1); border: 1px solid var(--azul); }
+
+.vacio { color: var(--texto-suave); padding: 22px; text-align: center; }
+
+/* --- tablas --- */
+
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--borde); }
+th { color: var(--texto-suave); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+tbody tr:hover { background: var(--panel-2); }
+.tabla-scroll { overflow-x: auto; }
+
+/* --- etiquetas de estado --- */
+
+.etiqueta {
+  display: inline-block; padding: 2px 9px; border-radius: 11px;
+  font-size: 11.5px; font-weight: 700; white-space: nowrap;
+}
+.etiqueta.verde    { background: rgba(46,160,67,.19);  color: #56d364; }
+.etiqueta.amarillo { background: rgba(210,153,34,.19); color: #e3b341; }
+.etiqueta.rojo     { background: rgba(218,54,51,.19);  color: #ff7b72; }
+.etiqueta.azul     { background: rgba(56,139,253,.19); color: #79c0ff; }
+.etiqueta.gris     { background: rgba(110,118,129,.22); color: #b1bac4; }
+
+/* --- cuadrícula de habitaciones --- */
+
+.piso { margin-bottom: 14px; }
+.piso h3 { margin: 0 0 7px; font-size: 13px; color: var(--texto-suave); font-weight: 600; }
+.rejilla { display: flex; flex-wrap: wrap; gap: 5px; }
+.cuarto {
+  width: 46px; height: 34px; border-radius: 5px; border: 1px solid var(--borde);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11.5px; font-weight: 600; cursor: help;
+}
+.cuarto.DISPONIBLE        { background: rgba(46,160,67,.22);  border-color: var(--verde); }
+.cuarto.OCUPADA           { background: rgba(56,139,253,.18); border-color: var(--azul); }
+.cuarto.FUERA_DE_SERVICIO { background: rgba(218,54,51,.24);  border-color: var(--rojo); }
+
+.resumen { display: flex; gap: 9px; flex-wrap: wrap; margin-bottom: 16px; }
+.resumen .dato {
+  background: var(--panel-2); border: 1px solid var(--borde);
+  border-radius: 7px; padding: 9px 14px; min-width: 108px;
+}
+.resumen .dato .n { font-size: 21px; font-weight: 700; }
+.resumen .dato .r { font-size: 11.5px; color: var(--texto-suave); text-transform: uppercase; }
+
+/* --- salud --- */
+
+.tarjetas-salud { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 11px; }
+.servicio { background: var(--panel-2); border: 1px solid var(--borde); border-radius: 7px; padding: 13px; }
+.servicio.sano  { border-left: 4px solid var(--verde); }
+.servicio.caido { border-left: 4px solid var(--rojo); }
+.servicio.desconocido { border-left: 4px solid var(--gris); }
+.servicio h3 { margin: 0 0 6px; font-size: 14px; }
+.servicio .detalle { color: var(--texto-suave); font-size: 12px; }
+
+/* --- bandeja --- */
+
+.aviso-item {
+  border: 1px solid var(--borde); border-left-width: 4px;
+  border-radius: 7px; padding: 12px 14px; margin-bottom: 9px; background: var(--panel-2);
+}
+.aviso-item.no-leido { border-left-color: var(--azul); }
+.aviso-item.leido { border-left-color: var(--borde); opacity: .62; }
+.aviso-item h4 { margin: 0 0 5px; font-size: 14px; }
+.aviso-item p { margin: 0 0 8px; color: var(--texto-suave); font-size: 13px; }
+.aviso-item .pie { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; font-size: 11.5px; color: var(--texto-suave); }

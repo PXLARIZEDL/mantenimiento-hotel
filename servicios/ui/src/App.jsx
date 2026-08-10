@@ -1,32 +1,89 @@
-{/*
-  PROPÓSITO: componente raíz de la interfaz. Organiza las cinco pantallas del
-    sistema y decide cuál se ve. Es el mapa visual del proyecto: cada pantalla
-    corresponde a un servicio del backend.
+// Componente raíz: organiza las cinco pantallas y decide cuál se ve.
+// Cada pantalla corresponde a un servicio del backend.
+//
+// La navegación es por PESTAÑAS y no por rutas a propósito: nginx reenvía al
+// gateway los prefijos /ordenes, /habitaciones, /notificaciones... Si el
+// navegador usara esas mismas rutas, chocarían con la API.
 
-  DEBE CONTENER:
-    1. La estructura general: encabezado con el nombre del sistema y una
-       navegación entre las cinco secciones.
-    2. El estado de qué sección está activa (por pestañas o por rutas si se usa
-       react-router-dom).
-    3. El renderizado de los cinco componentes de src/componentes/:
-         - Habitaciones          → estado de los 400 cuartos
-         - NuevaOrden            → reportar una falla
-         - ListaOrdenes          → seguimiento del ciclo de vida
-         - BandejaNotificaciones → avisos a recepción
-         - PanelSalud            → estado de los servicios
-    4. El manejo de un error global de la aplicación, para que una llamada
-       fallida no deje la pantalla en blanco.
+import { Component, useState } from 'react'
 
-  NO DEBE CONTENER:
-    1. Llamadas fetch directas; todas pasan por src/api.js.
-    2. La lógica interna de cada pantalla; cada componente se ocupa de lo suyo.
-    3. Reglas de negocio: qué técnico corresponde a qué falla, cuándo se libera
-       una habitación o qué transición de estado es válida. Todo eso lo decide
-       el backend; la UI solo muestra y pide.
-    4. Validación fiscal ni de dominio replicada del backend.
+import Habitaciones from './componentes/Habitaciones.jsx'
+import NuevaOrden from './componentes/NuevaOrden.jsx'
+import ListaOrdenes from './componentes/ListaOrdenes.jsx'
+import BandejaNotificaciones from './componentes/BandejaNotificaciones.jsx'
+import PanelSalud from './componentes/PanelSalud.jsx'
 
-  RELACIONADO:
-    - main.jsx (lo monta)
-    - src/componentes/*.jsx (los cinco hijos)
-    - src/api.js (única vía de comunicación con el backend)
-*/}
+const SECCIONES = [
+  { id: 'nueva', titulo: 'Reportar falla', Componente: NuevaOrden },
+  { id: 'ordenes', titulo: 'Órdenes', Componente: ListaOrdenes },
+  { id: 'habitaciones', titulo: 'Habitaciones', Componente: Habitaciones },
+  { id: 'bandeja', titulo: 'Avisos', Componente: BandejaNotificaciones },
+  { id: 'salud', titulo: 'Salud del sistema', Componente: PanelSalud },
+]
+
+/**
+ * Evita que un fallo de render deje la pantalla en blanco. Sin esto, un error
+ * en cualquier pantalla tumba toda la aplicación y no se ve ni el menú.
+ */
+class Barrera extends Component {
+  state = { error: null }
+
+  static getDerivedStateFromError(error) {
+    return { error }
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <section className="tarjeta">
+          <div className="mensaje error">
+            <strong>Se rompió esta pantalla.</strong>
+            <div style={{ marginTop: 6, fontSize: 13 }}>{String(this.state.error)}</div>
+          </div>
+          <button className="suave" onClick={() => this.setState({ error: null })}>
+            Reintentar
+          </button>
+        </section>
+      )
+    }
+    return this.props.children
+  }
+}
+
+export default function App() {
+  const [seccion, setSeccion] = useState('nueva')
+
+  const activa = SECCIONES.find((s) => s.id === seccion) ?? SECCIONES[0]
+  const Pantalla = activa.Componente
+
+  return (
+    <>
+      <header className="principal">
+        <div className="contenedor">
+          <h1>Mantenimiento — Hotel</h1>
+          <p>Gestión de órdenes de mantenimiento · 400 habitaciones</p>
+
+          <nav className="pestanas">
+            {SECCIONES.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => setSeccion(s.id)}
+                aria-current={s.id === seccion ? 'page' : undefined}
+              >
+                {s.titulo}
+              </button>
+            ))}
+          </nav>
+        </div>
+      </header>
+
+      <main className="contenedor">
+        {/* La barrera se reinicia al cambiar de pestaña: un error en una
+            pantalla no debe dejar inutilizadas las otras. */}
+        <Barrera key={seccion}>
+          <Pantalla />
+        </Barrera>
+      </main>
+    </>
+  )
+}
