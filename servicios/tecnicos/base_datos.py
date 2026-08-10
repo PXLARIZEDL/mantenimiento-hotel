@@ -50,8 +50,8 @@ def crear_tablas() -> None:
     Base.metadata.create_all(motor)
 
 
-# Al menos uno por especialidad y por turno: sin ellos no hay caso de uso que
-# demostrar, porque ninguna orden llegaría a asignarse.
+# Uno por especialidad y por turno. Sin plantilla sembrada ninguna orden
+# llegaría a asignarse, así que el sistema arrancaría sin poder hacer nada.
 _NOMBRES = {
     (Especialidad.AIRE_ACONDICIONADO, Turno.MANANA): "Luis Ramírez",
     (Especialidad.AIRE_ACONDICIONADO, Turno.TARDE): "Marta Peña",

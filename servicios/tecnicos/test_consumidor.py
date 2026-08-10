@@ -1,7 +1,7 @@
 """Pruebas del consumidor de orden.creada.
 
-Cubren las dos cosas que más se preguntan y que hasta ahora solo se podían
-demostrar a mano: la **idempotencia** y la **política de ack/nack**.
+Cubren lo que hasta ahora solo se podía comprobar a mano: la idempotencia y la
+política de ack/nack.
 
 Sin infraestructura:
 
