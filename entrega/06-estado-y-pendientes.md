@@ -66,20 +66,31 @@ manejo de reintentos. Se decidió documentarlo antes que implementarlo a medias.
 > queda**: sabemos cuál es el problema, sabemos cómo se llama la solución y
 > sabemos por qué no está.
 
-### 2. Sin tests automatizados
+### 2. Cobertura de pruebas incompleta
 
-**No hay ni un test en todo el proyecto.** Ni unitarios, ni de integración, ni de
-la UI.
+**Lo que sí hay:** `servicios/tecnicos/test_asignador.py`, con **6 casos** sobre
+la regla de asignación. Se ejecutan en el CI.
 
-Lo que duele especialmente: `asignador.py` está **diseñado** para probarse sin
-infraestructura —recibe los candidatos como parámetro, no importa SQLAlchemy ni
-aio-pika— y ese archivo de pruebas no existe. Se verificó a mano, corriendo la
-función contra los contratos reales, pero eso no queda en el repositorio.
+Ninguno levanta PostgreSQL ni RabbitMQ, y eso es el punto: `asignador.py` recibe
+los candidatos como parámetro justamente para poder probarse sin infraestructura.
+**Es la prueba de que la separación de responsabilidades sirve para algo
+concreto**, no solo para quedar bien en un diagrama.
 
-**Si hay tiempo antes de entregar, esto es lo que más rinde:** un archivo
-`test_asignador.py` con cuatro casos (turno correcto, desempate por carga, sin
-técnico, tipo de falla inválido). Son unas 40 líneas y demuestran que la
-separación de responsabilidades sirve para algo.
+| Caso | Qué protege |
+|---|---|
+| Desempate por menos carga | La regla de reparto |
+| Descarta a quien no está en turno | Que el turno se filtre antes de desempatar |
+| Sin técnico de esa especialidad | Que el caso se devuelva explícito y con motivo |
+| `tipoFalla` fuera del contrato | Que no reviente ante un valor inválido |
+| Desempate determinista | Que se pueda reproducir un caso en la defensa |
+| Plantilla vacía | Que sea un caso normal, no un error |
+
+**Lo que falta:** el consumidor de `tecnicos` (idempotencia, mensaje ilegible,
+reintento acotado), los servicios C# y la UI. Nada de eso tiene una sola prueba.
+
+Cubrir el consumidor es lo que más rendiría a continuación, porque la
+idempotencia es una de las preguntas más probables de la defensa y hoy solo se
+puede demostrar a mano.
 
 ### 3. `CrearAsync` con 171 líneas
 

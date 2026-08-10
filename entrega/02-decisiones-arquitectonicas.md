@@ -241,11 +241,38 @@ que todos los consumidores se muevan.
 
 ## 9. Integridad del CI
 
-`.github/workflows/limites.yml` **falla** si un pull request modifica dos o más
-carpetas bajo `servicios/`.
+Hay **dos workflows separados**, y están separados a propósito: uno verifica los
+*límites* de la arquitectura y el otro que el *código* funcione. Son dos
+preocupaciones distintas, y así se puede revertir una sin tocar la otra.
+
+### `limites.yml` — un pull request, un servicio
+
+**Falla** si un PR modifica dos o más carpetas bajo `servicios/`.
 
 No es burocracia: es la ley de Conway aplicada al revés. Si un cambio necesita
 tocar dos servicios a la vez, casi siempre significa que hay acoplamiento que no
 se declaró — y el CI obliga a hacerlo visible en vez de dejarlo pasar.
 
-Los 12 pull requests del proyecto respetaron la regla.
+Los 14 pull requests del proyecto respetaron la regla.
+
+### `verificacion.yml` — que lo que entra funcione
+
+| Job | Qué comprueba |
+|---|---|
+| **Codificación** | Que ningún archivo de código esté fuera de UTF-8 |
+| **Pruebas de tecnicos** | `pytest` sobre la regla de asignación |
+| **Compilación C#** | Que `habitaciones`, `ordenes` y `gateway` compilen en Release, sin warnings |
+
+El primero merece explicación, porque nació de un fallo real: un archivo `.py`
+guardado en **cp1252** en vez de UTF-8 hace que Python 3 se niegue a leerlo
+(`SyntaxError: Non-UTF-8 code`), y pytest ni siquiera lo recolecta. Pasó en este
+repositorio, y **el CI dio verde igual** porque en ese momento no ejecutaba nada.
+
+Es un riesgo específico de un proyecto políglota donde cada uno usa su editor en
+Windows y el dominio está lleno de eñes y tildes (`MAÑANA`, `habitación`,
+`plomería`). La comprobación cuesta segundos y evita un fallo que desde fuera
+parece un problema de lógica.
+
+> **Lección que vale para la defensa:** un CI que no ejecuta nada da una
+> *garantía falsa*. Decía «pass» sobre un archivo que el intérprete no podía ni
+> leer. Que exista el workflow no es lo mismo que estar verificando algo.
