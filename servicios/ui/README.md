@@ -100,7 +100,7 @@ Con todo el sistema arriba: **http://localhost:5173**
 
 Las tres cosas que se ven mejor desde la interfaz:
 
-**1. La asignación es asincrónica.** Reportá una falla en *Reportar falla* y pasá
+**1. La asignación es asincrónica.** Reporta una falla en *Reportar falla* y pasa
 enseguida a *Órdenes*: aparece `ABIERTA` y, sin tocar nada, cambia sola a
 `ASIGNADA` con el nombre del técnico. Ese cambio lo produjo un evento que viajó
 por RabbitMQ hasta `tecnicos` y volvió.
