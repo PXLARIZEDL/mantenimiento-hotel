@@ -114,6 +114,54 @@ def obtener_tecnico(sesion: Session, tecnico_id: uuid.UUID) -> Tecnico | None:
     return sesion.get(Tecnico, tecnico_id)
 
 
+def crear_tecnico(
+    sesion: Session, nombre: str, especialidad: str, turno: str, activo: bool
+) -> Tecnico:
+    tecnico = Tecnico(
+        id=uuid.uuid4(),
+        nombre=nombre.strip(),
+        especialidad=especialidad,
+        turno=turno,
+        activo=activo,
+    )
+    sesion.add(tecnico)
+    sesion.commit()
+    return tecnico
+
+
+def actualizar_tecnico(
+    sesion: Session,
+    tecnico_id: uuid.UUID,
+    nombre: str,
+    especialidad: str,
+    turno: str,
+    activo: bool,
+) -> Tecnico | None:
+    """Reemplaza los datos del técnico. Devuelve None si no existe.
+
+    No hay borrado: las asignaciones apuntan al técnico, así que borrarlo
+    dejaría huérfana la traza de quién atendió qué. Para sacarlo de circulación
+    se pone `activo` en false — el asignador solo mira a los activos, así que
+    deja de recibir órdenes nuevas y conserva las que ya tenía.
+    """
+    tecnico = sesion.get(Tecnico, tecnico_id)
+    if tecnico is None:
+        return None
+
+    tecnico.nombre = nombre.strip()
+    tecnico.especialidad = especialidad
+    tecnico.turno = turno
+    tecnico.activo = activo
+    sesion.commit()
+    return tecnico
+
+
+def contar_asignaciones(sesion: Session, tecnico_id: uuid.UUID) -> int:
+    return sesion.scalar(
+        select(func.count()).select_from(Asignacion).where(Asignacion.tecnico_id == tecnico_id)
+    ) or 0
+
+
 def listar_asignaciones(sesion: Session) -> list[Asignacion]:
     return list(
         sesion.scalars(select(Asignacion).order_by(Asignacion.asignada_en.desc()))

@@ -186,6 +186,30 @@ class TecnicoRespuesta(BaseModel):
     activo: bool
 
 
+class TecnicoNuevo(BaseModel):
+    """Alta de un técnico.
+
+    `especialidad` y `turno` se declaran con los enums del dominio, así que un
+    valor fuera del catálogo lo rechaza pydantic antes de tocar la base. Sin
+    eso se podría dar de alta a alguien con una especialidad que ninguna falla
+    va a pedir nunca.
+    """
+
+    nombre: str = Field(min_length=1, max_length=120)
+    especialidad: Especialidad
+    turno: Turno
+    activo: bool = True
+
+
+class TecnicoCambio(BaseModel):
+    """Edición. Van todos los campos: es un reemplazo, no un parche."""
+
+    nombre: str = Field(min_length=1, max_length=120)
+    especialidad: Especialidad
+    turno: Turno
+    activo: bool
+
+
 class AsignacionRespuesta(BaseModel):
     model_config = ConfigDict(
         from_attributes=True, alias_generator=a_camel, populate_by_name=True

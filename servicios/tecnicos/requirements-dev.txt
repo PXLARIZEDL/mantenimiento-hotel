@@ -1,1 +1,12 @@
+# Herramientas de prueba. Van aparte de requirements.txt porque no viajan a la
+# imagen: el Dockerfile solo instala las de producción.
+
 pytest==8.0.0
+
+# Lo necesita el TestClient de FastAPI para levantar la app en memoria y
+# pegarle sin abrir un puerto.
+#
+# Que httpx aparezca aquí no contradice la regla de requirements.txt: allí está
+# prohibido porque este servicio no llama a nadie por HTTP. Aquí solo se usa
+# para probarlo desde adentro.
+httpx==0.28.1
