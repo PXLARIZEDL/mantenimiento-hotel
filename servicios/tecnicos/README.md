@@ -84,16 +84,27 @@ absurdas.
 
 ## API
 
-Solo consultas. **No hay `POST` de asignación**: asignar es consecuencia de un
-evento, no de una petición.
-
 | Método | Ruta | Para qué |
 |---|---|---|
 | `GET` | `/tecnicos` (filtro `?especialidad=` y `?turno=`) | UI |
 | `GET` | `/tecnicos/disponibles` | quiénes están en turno **ahora**; depurar por qué una orden no se asignó |
 | `GET` | `/tecnicos/{id}` | detalle |
+| `POST` | `/tecnicos` | dar de alta |
+| `PUT` | `/tecnicos/{id}` | cambiar nombre, especialidad, turno o si está activo |
 | `GET` | `/asignaciones` | traza de lo que este servicio decidió |
 | `GET` | `/salud` | `PanelSalud` y health checks del gateway |
+
+**No hay `POST` de asignación**: asignar es consecuencia de un evento, no de una
+petición. Dar de alta a un técnico sí entra por HTTP, porque este servicio es el
+dueño de la plantilla — son dos cosas distintas.
+
+**Tampoco hay `DELETE`.** Las asignaciones apuntan al técnico, así que borrarlo
+dejaría huérfana la traza de quién atendió qué. Para sacar a alguien de
+circulación se pone `activo` en `false`: el asignador solo mira a los activos,
+así que deja de recibir órdenes nuevas y conserva las que ya tenía.
+
+`especialidad` y `turno` se validan contra el catálogo del dominio; un valor
+inventado se rechaza con `422` antes de tocar la base.
 
 ---
 
@@ -163,8 +174,8 @@ se desincronizaron.
 
 ## Pendientes conocidos
 
-1. **Faltan pruebas de los endpoints.** Hay **21**, y ninguna levanta
-   PostgreSQL ni RabbitMQ:
+1. **Faltan pruebas de las consultas.** Hay **32**, y ninguna levanta PostgreSQL
+   ni RabbitMQ:
 
    ```
    pip install -r requirements.txt -r requirements-dev.txt
@@ -175,9 +186,11 @@ se desincronizaron.
    |---|---|
    | `test_asignador.py` | La regla: turno, desempate, sin técnico, falla inválida |
    | `test_consumidor.py` | Idempotencia, forma de lo publicado, política de ack/nack |
+   | `test_gestion.py` | Alta y edición, validación del catálogo, y que no exista borrado |
 
    El consumidor se prueba con **SQLite en memoria** y un mensaje falso que
-   anota si le hicieron ack o nack. Lo que falta son los endpoints de `main.py`.
+   anota si le hicieron ack o nack; la gestión, con el `TestClient` de FastAPI
+   contra la misma base en memoria. Lo que falta son los `GET` de consulta.
 
 2. **Outbox.** La asignación se guarda y el evento se publica en dos pasos; si el
    broker falla entre medio, la orden queda asignada aquí pero `ordenes` nunca se
