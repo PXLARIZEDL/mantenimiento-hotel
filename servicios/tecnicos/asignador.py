@@ -125,16 +125,12 @@ def elegir_tecnico(
         registro.warning("%s Descartados: %s", motivo, descartados or "ninguno")
         return Decision(None, motivo, tuple(descartados))
 
-    # DESEMPATE: el que tenga menos órdenes abiertas.
+    # Desempate por carga: gana el que menos órdenes abiertas tenga. Repartir
+    # así evita que uno acumule la cola mientras otro del mismo turno está
+    # libre; por antigüedad se le cargaría todo a la misma persona.
     #
-    # Se elige repartir carga y no antigüedad ni azar por una razón operativa:
-    # es la única de las tres que evita que un técnico acumule la cola mientras
-    # otro del mismo turno está libre. La antigüedad concentraría el trabajo en
-    # una persona y el azar no garantiza nada a corto plazo.
-    #
-    # A igualdad de carga se ordena por nombre para que la decisión sea
-    # DETERMINISTA: la misma entrada da siempre la misma salida, que es lo que
-    # permite probar esta función y reproducir un caso en la defensa.
+    # El segundo criterio es el nombre, para que la salida sea siempre la misma
+    # con la misma entrada. Si fuera al azar, esta función no se podría probar.
     elegibles.sort(key=lambda t: (t.ordenes_abiertas, t.nombre))
     elegido = elegibles[0]
 

@@ -94,7 +94,7 @@ async function pedir(ruta, opciones = {}) {
       throw new ErrorApi(
         mensajeDelCuerpo(
           cuerpo,
-          'El servicio de habitaciones no está disponible. La orden NO se creó; volvé a intentarlo.',
+          'El servicio de habitaciones no está disponible. La orden NO se creó; vuelve a intentarlo.',
         ),
         { codigo: 503, esCircuitoAbierto: true },
       )

@@ -58,8 +58,8 @@ export default function BandejaNotificaciones() {
       {/* El usuario no debe descubrir por accidente que esto es volátil. */}
       <div className="mensaje aviso">
         Estos avisos viven <strong>solo en memoria</strong> y se pierden si el servicio se
-        reinicia. Es una decisión de arquitectura: es el servicio que se apaga para demostrar
-        que el resto del sistema sigue funcionando sin él.
+        reinicia. Los eventos que queden sin procesar esperan en la cola, así que al volver
+        se recuperan solos.
       </div>
 
       <div className="fila" style={{ marginBottom: 14 }}>

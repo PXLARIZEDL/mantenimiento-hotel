@@ -22,7 +22,12 @@ import base_datos
 from asignador import turno_vigente
 from configuracion import configuracion
 from consumidor import consumidor
-from modelos import AsignacionRespuesta, TecnicoRespuesta
+from modelos import (
+    AsignacionRespuesta,
+    TecnicoCambio,
+    TecnicoNuevo,
+    TecnicoRespuesta,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -86,6 +91,57 @@ def obtener_tecnico(
     if tecnico is None:
         raise HTTPException(status_code=404, detail=f"No existe el técnico {tecnico_id}.")
 
+    return tecnico
+
+
+@app.post("/tecnicos", response_model=TecnicoRespuesta, status_code=201)
+def crear_tecnico(
+    datos: TecnicoNuevo, sesion: Session = Depends(base_datos.obtener_sesion)
+):
+    """Da de alta a un técnico.
+
+    Este servicio es el dueño de la plantilla, así que el alta entra por aquí.
+    No se confunde con asignar: asignar sigue siendo consecuencia del evento
+    orden.creada, no de una petición.
+    """
+    tecnico = base_datos.crear_tecnico(
+        sesion,
+        nombre=datos.nombre,
+        especialidad=datos.especialidad.value,
+        turno=datos.turno.value,
+        activo=datos.activo,
+    )
+    registro.info(
+        "Alta de %s (%s, turno %s).", tecnico.nombre, tecnico.especialidad, tecnico.turno
+    )
+    return tecnico
+
+
+@app.put("/tecnicos/{tecnico_id}", response_model=TecnicoRespuesta)
+def actualizar_tecnico(
+    tecnico_id: uuid.UUID,
+    datos: TecnicoCambio,
+    sesion: Session = Depends(base_datos.obtener_sesion),
+):
+    """Cambia nombre, especialidad, turno o si está activo.
+
+    Poner `activo` en false es la forma de sacar a alguien de circulación: deja
+    de recibir órdenes nuevas pero conserva las que ya tenía. No hay borrado
+    porque las asignaciones apuntan al técnico y se perdería la traza.
+    """
+    tecnico = base_datos.actualizar_tecnico(
+        sesion,
+        tecnico_id,
+        nombre=datos.nombre,
+        especialidad=datos.especialidad.value,
+        turno=datos.turno.value,
+        activo=datos.activo,
+    )
+
+    if tecnico is None:
+        raise HTTPException(status_code=404, detail=f"No existe el técnico {tecnico_id}.")
+
+    registro.info("Actualizado %s (activo=%s).", tecnico.nombre, tecnico.activo)
     return tecnico
 
 
