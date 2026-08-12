@@ -11,6 +11,7 @@ namespace Habitaciones.Datos;
 /// propia base y nadie cruza esa frontera
 /// (docs/adr/002-limites-contextos.md).
 /// </remarks>
+/// .
 public class HabitacionesDbContext : DbContext
 {
     public HabitacionesDbContext(DbContextOptions<HabitacionesDbContext> opciones)

@@ -29,6 +29,7 @@ public sealed record HabitacionRespuesta(
         new(h.Id, h.Numero, h.Piso, h.Tipo, h.Estado, h.ActualizadaEn, h.OrdenesActivas);
 }
 
+
 public static class HabitacionesEndpoints
 {
     public static WebApplication MapHabitacionesEndpoints(this WebApplication app)
@@ -78,7 +79,7 @@ public static class HabitacionesEndpoints
 
         return Results.Ok(habitaciones);
     }
-
+    .
     private static async Task<IResult> ObtenerAsync(
         int numero, HabitacionesDbContext bd, CancellationToken ct)
     {
